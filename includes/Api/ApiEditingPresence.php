@@ -14,6 +14,10 @@ use MediaWiki\Extension\EditingPresence\Push\PushBackend;
 use MediaWiki\Title\TitleFactory;
 use Wikimedia\ParamValidator\ParamValidator;
 use Wikimedia\Timestamp\ConvertibleTimestamp;
+use function preg_match;
+use function sha1;
+use function wfEscapeWikiText;
+use const NS_MAIN;
 
 /**
  * Internal module used by the editors to report that they are open and to
