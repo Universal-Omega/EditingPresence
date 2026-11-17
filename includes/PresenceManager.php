@@ -131,7 +131,11 @@ final class PresenceManager {
 
 		$merged = $this->store->merge(
 			$key,
-			function ( BagOStuff $unusedCache, string $unusedKey, mixed $current, int &$ttl ) use (
+			/**
+			 * @param BagOStuff $cache @phan-unused-param
+			 * @param string $key @phan-unused-param
+			 */
+			function ( BagOStuff $cache, string $key, mixed $current, int &$ttl ) use (
 				&$result, &$changed, $clientId, $entry, $now, $timeout
 			): array {
 				$entries = $this->activeEntries( $current, $now );
