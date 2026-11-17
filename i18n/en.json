@@ -1,6 +1,8 @@
 {
 	"@metadata": {
-		"authors": []
+		"authors": [
+			"Universal Omega"
+		]
 	},
 	"editingpresence-anonymous-count": "$1 anonymous {{PLURAL:$1|user|users}}",
 	"editingpresence-desc": "Shows a notice in the wikitext and visual editors when other users are editing the same page.",
@@ -11,5 +13,6 @@
 	"editingpresence-section-page-count": "{{PLURAL:$1|One other user is|$1 other users are}} editing the whole page.",
 	"editingpresence-section-page-named": "$1 {{PLURAL:$2|is|are}} editing the whole page.",
 	"editingpresence-section-section-count": "{{PLURAL:$1|One other user is|$1 other users are}} also editing this section.",
-	"editingpresence-section-section-named": "$1 {{PLURAL:$2|is|are}} also editing this section."
+	"editingpresence-section-section-named": "$1 {{PLURAL:$2|is|are}} also editing this section.",
+	"editingpresence-typing": "$1 {{PLURAL:$2|is|are}} typing…"
 }
