@@ -4,6 +4,9 @@ declare( strict_types=1 );
 
 namespace MediaWiki\Extension\EditingPresence;
 
+use function is_int;
+use function is_string;
+
 /**
  * One open editor. A user id of 0 means the editor is not logged in, and then
  * the name is always empty so no IP address is ever stored.
