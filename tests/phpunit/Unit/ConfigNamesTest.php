@@ -27,7 +27,7 @@ class ConfigNamesTest extends MediaWikiUnitTestCase {
 		$this->assertIsArray( $manifest['config'] );
 
 		$declared = array_keys( $manifest['config'] );
-		$constants = array_values( ( new ReflectionClass( ConfigNames::class ) )->getConstants() );
+		$constants = array_values( new ReflectionClass( ConfigNames::class )->getConstants() );
 
 		sort( $declared );
 		sort( $constants );
