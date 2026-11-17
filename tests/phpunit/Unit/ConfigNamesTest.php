@@ -10,6 +10,7 @@ use ReflectionClass;
 use function array_keys;
 use function array_values;
 use function file_get_contents;
+use function is_array;
 use function json_decode;
 use function sort;
 use const JSON_THROW_ON_ERROR;
@@ -23,8 +24,9 @@ class ConfigNamesTest extends MediaWikiUnitTestCase {
 	public function testNamesMatchExtensionJson(): void {
 		$json = file_get_contents( __DIR__ . '/../../../extension.json' );
 		$manifest = json_decode( $json, associative: true, flags: JSON_THROW_ON_ERROR );
-		$this->assertIsArray( $manifest );
-		$this->assertIsArray( $manifest['config'] );
+		if ( !is_array( $manifest ) || !is_array( $manifest['config'] ?? null ) ) {
+			$this->fail( 'extension.json has no config section' );
+		}
 
 		$declared = array_keys( $manifest['config'] );
 		$constants = array_values( new ReflectionClass( ConfigNames::class )->getConstants() );
