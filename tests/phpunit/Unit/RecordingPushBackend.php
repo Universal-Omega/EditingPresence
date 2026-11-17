@@ -14,7 +14,10 @@ final class RecordingPushBackend implements PushBackend {
 	/** @var list<string> */
 	public array $published = [];
 
-	/** @inheritDoc */
+	/**
+	 * @inheritDoc
+	 * @param string $pageKey @phan-unused-param
+	 */
 	public function getClientConfig( string $pageKey ): ?array {
 		return null;
 	}
