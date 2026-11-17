@@ -117,8 +117,9 @@ class ApiEditingPresenceTest extends ApiTestCase {
 
 		$second = $this->request( 'heartbeat', 'bbbbbbbb02', '', true );
 
-		$this->assertTrue( $second['editors'][0]['typing'] );
-		$this->assertIsInt( $second['editors'][0]['hue'] );
+		$editor = $second['editors'][0];
+		$this->assertTrue( $editor['typing'] ?? false );
+		$this->assertIsInt( $editor['hue'] ?? null );
 	}
 
 	public function testTypingIsDisabledWithoutRichPresence(): void {
