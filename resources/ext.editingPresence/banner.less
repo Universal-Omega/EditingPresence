@@ -1,3 +1,5 @@
+@avatar-size: 24px;
+
 .ext-editingpresence-banner {
 	margin-bottom: 16px;
 
@@ -7,5 +9,59 @@
 
 	p + p {
 		margin-top: 4px;
+	}
+}
+
+.ext-editingpresence-avatars {
+	display: flex;
+	margin-bottom: 6px;
+}
+
+.ext-editingpresence-avatar {
+	display: inline-flex;
+	overflow: hidden;
+	width: @avatar-size;
+	height: @avatar-size;
+	box-sizing: border-box;
+	align-items: center;
+	justify-content: center;
+	border: 2px solid hsl( var( --ext-editingpresence-hue, 0 ) 65% 45% );
+	border-radius: 50%;
+	margin-right: -6px;
+	background-color: hsl( var( --ext-editingpresence-hue, 0 ) 65% 45% );
+	color: #fff;
+	font-size: 0.85em;
+	font-weight: bold;
+	line-height: 1;
+
+	img {
+		width: 100%;
+		height: 100%;
+		object-fit: cover;
+	}
+}
+
+.ext-editingpresence-avatar--typing {
+	animation: ext-editingpresence-pulse 1.2s ease-in-out infinite;
+}
+
+.ext-editingpresence-typing {
+	font-style: italic;
+}
+
+@keyframes ext-editingpresence-pulse {
+	0%,
+	100% {
+		box-shadow: 0 0 0 0 hsl( var( --ext-editingpresence-hue, 0 ) 65% 45% / 60% );
+	}
+
+	50% {
+		box-shadow: 0 0 0 4px hsl( var( --ext-editingpresence-hue, 0 ) 65% 45% / 0% );
+	}
+}
+
+@media ( prefers-reduced-motion: reduce ) {
+	.ext-editingpresence-avatar--typing {
+		animation: none;
 	}
 }
