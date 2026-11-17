@@ -21,6 +21,7 @@ class PresenceEntryTest extends MediaWikiUnitTestCase {
 			userName: 'Example',
 			section: '2',
 			touched: 1000,
+			typingUntil: 1005,
 		);
 
 		$copy = PresenceEntry::fromArray( $entry->toArray() );
@@ -30,13 +31,50 @@ class PresenceEntryTest extends MediaWikiUnitTestCase {
 	}
 
 	public function testDerivedProperties(): void {
-		$wholePage = new PresenceEntry( clientId: 'a', userId: 0, userName: '', section: '', touched: 1 );
-		$section = new PresenceEntry( clientId: 'b', userId: 5, userName: 'Example', section: '3', touched: 1 );
+		$wholePage = new PresenceEntry(
+			clientId: 'a',
+			userId: 0,
+			userName: '',
+			section: '',
+			touched: 1,
+			typingUntil: 0,
+		);
+		$section = new PresenceEntry(
+			clientId: 'b',
+			userId: 5,
+			userName: 'Example',
+			section: '3',
+			touched: 1,
+			typingUntil: 0,
+		);
 
 		$this->assertTrue( $wholePage->isWholePage );
 		$this->assertFalse( $wholePage->isRegistered );
 		$this->assertFalse( $section->isWholePage );
 		$this->assertTrue( $section->isRegistered );
+	}
+
+	public function testTypingWindow(): void {
+		$entry = new PresenceEntry(
+			clientId: 'a',
+			userId: 5,
+			userName: 'Example',
+			section: '',
+			touched: 100,
+			typingUntil: 110,
+		);
+
+		$this->assertTrue( $entry->isTypingAt( 109 ) );
+		$this->assertFalse( $entry->isTypingAt( 110 ) );
+	}
+
+	public function testDataWithoutTypingStillLoads(): void {
+		$entry = PresenceEntry::fromArray( [
+			'clientId' => 'a', 'userId' => 1, 'userName' => 'Example', 'section' => '', 'touched' => 1,
+		] );
+
+		$this->assertNotNull( $entry );
+		$this->assertSame( 0, $entry->typingUntil );
 	}
 
 	/**
@@ -51,6 +89,10 @@ class PresenceEntryTest extends MediaWikiUnitTestCase {
 		yield 'empty' => [ [] ];
 		yield 'wrong user id type' => [ [
 			'clientId' => 'a', 'userId' => '1', 'userName' => '', 'section' => '', 'touched' => 1,
+		] ];
+		yield 'wrong typing type' => [ [
+			'clientId' => 'a', 'userId' => 1, 'userName' => '', 'section' => '', 'touched' => 1,
+			'typingUntil' => 'soon',
 		] ];
 		yield 'missing touched' => [ [
 			'clientId' => 'a', 'userId' => 1, 'userName' => '', 'section' => '',
