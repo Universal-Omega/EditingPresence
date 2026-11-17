@@ -5,6 +5,8 @@ declare( strict_types=1 );
 namespace MediaWiki\Extension\EditingPresence;
 
 use MediaWiki\Config\Config;
+use function max;
+use function min;
 
 final readonly class PresenceSettings {
 
