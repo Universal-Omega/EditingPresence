@@ -1,0 +1,188 @@
+{
+	"name": "EditingPresence",
+	"version": "1.0.0",
+	"author": [
+		"EditingPresence contributors",
+		"Universal Omega"
+	],
+	"url": "https://www.mediawiki.org/wiki/Extension:EditingPresence",
+	"descriptionmsg": "editingpresence-desc",
+	"license-name": "GPL-2.0-or-later",
+	"type": "other",
+	"requires": {
+		"MediaWiki": ">= 1.47.0",
+		"platform": {
+			"php": ">= 8.4"
+		}
+	},
+	"MessagesDirs": {
+		"EditingPresence": [
+			"i18n",
+			"i18n/api"
+		]
+	},
+	"AutoloadNamespaces": {
+		"MediaWiki\\Extension\\EditingPresence\\": "includes/"
+	},
+	"TestAutoloadNamespaces": {
+		"MediaWiki\\Extension\\EditingPresence\\Tests\\": "tests/phpunit/"
+	},
+	"ServiceWiringFiles": [
+		"includes/ServiceWiring.php"
+	],
+	"APIModules": {
+		"editingpresence": {
+			"class": "MediaWiki\\Extension\\EditingPresence\\Api\\ApiEditingPresence",
+			"services": [
+				"EditingPresence.PresenceManager",
+				"EditingPresence.Settings",
+				"EditingPresence.PushBackend",
+				"TitleFactory"
+			]
+		}
+	},
+	"HookHandlers": {
+		"editpage": {
+			"class": "MediaWiki\\Extension\\EditingPresence\\Hook\\EditPageHooks"
+		}
+	},
+	"Hooks": {
+		"EditPage::showEditForm:initial": "editpage"
+	},
+	"attributes": {
+		"EditingPresence": {
+			"PushBackends": {
+				"nchan": {
+					"factory": "MediaWiki\\Extension\\EditingPresence\\Push\\NchanPushBackend::factory",
+					"services": [
+						"EditingPresence.PushSettings",
+						"HttpRequestFactory"
+					]
+				}
+			}
+		},
+		"VisualEditor": {
+			"PluginModules": [
+				"ext.editingPresence.ve"
+			]
+		}
+	},
+	"ResourceFileModulePaths": {
+		"localBasePath": "resources",
+		"remoteExtPath": "EditingPresence/resources"
+	},
+	"ResourceModules": {
+		"ext.editingPresence": {
+			"packageFiles": [
+				"ext.editingPresence/index.js",
+				"ext.editingPresence/PresenceTracker.js",
+				"ext.editingPresence/PresenceBanner.js",
+				"ext.editingPresence/transports.js",
+				"ext.editingPresence/NchanTransport.js",
+				{
+					"name": "ext.editingPresence/config.json",
+					"config": {
+						"heartbeatInterval": "EditingPresenceHeartbeatInterval"
+					}
+				}
+			],
+			"styles": [
+				"ext.editingPresence/banner.less"
+			],
+			"messages": [
+				"editingpresence-anonymous-count",
+				"editingpresence-page-page-named",
+				"editingpresence-page-page-count",
+				"editingpresence-page-section-named",
+				"editingpresence-page-section-count",
+				"editingpresence-section-page-named",
+				"editingpresence-section-page-count",
+				"editingpresence-section-section-named",
+				"editingpresence-section-section-count"
+			],
+			"dependencies": [
+				"mediawiki.api",
+				"mediawiki.jqueryMsg",
+				"mediawiki.language",
+				"mediawiki.user",
+				"mediawiki.util",
+				"mediawiki.codex.messagebox.styles"
+			]
+		},
+		"ext.editingPresence.wikitext": {
+			"packageFiles": [
+				"ext.editingPresence.wikitext/init.js"
+			],
+			"dependencies": [
+				"ext.editingPresence"
+			]
+		},
+		"ext.editingPresence.ve": {
+			"packageFiles": [
+				"ext.editingPresence.ve/init.js"
+			],
+			"dependencies": [
+				"ext.editingPresence"
+			]
+		}
+	},
+	"config": {
+		"EditingPresenceShowUsernames": {
+			"value": true,
+			"description": "Whether the names of the other editors are shown. When false, only the number of other editors is shown and names are never sent to the browser. Anonymous editors are never named, so IP addresses are never exposed."
+		},
+		"EditingPresenceIncludeOwnOtherSessions": {
+			"value": false,
+			"description": "Whether other sessions of your own account, such as a second tab or device, count as other editors. Useful for testing with a single account."
+		},
+		"EditingPresenceMaxListedNames": {
+			"value": 5,
+			"description": "Names are only listed while fewer than this many editors fall in a group. At or above it the notice shows just the number, for example 5 other users are also editing this page. Values below 1 are raised to 1."
+		},
+		"EditingPresenceSectionIncludeWholePageEditors": {
+			"value": true,
+			"description": "When a user edits a single section, whether users who are editing the whole page are included in the notice."
+		},
+		"EditingPresenceSectionIncludeSameSectionEditors": {
+			"value": true,
+			"description": "When a user edits a single section, whether other users editing that same section are included in the notice."
+		},
+		"EditingPresenceHeartbeatInterval": {
+			"value": 20,
+			"description": "Seconds between presence updates sent by an open editor. Values below 5 are raised to 5."
+		},
+		"EditingPresenceActiveHeartbeatInterval": {
+			"value": 3,
+			"description": "Seconds between updates while polling and someone else is editing the page. Never more than the heartbeat interval and never below 2. Not used while a push connection is working."
+		},
+		"EditingPresenceTimeout": {
+			"value": 60,
+			"description": "Seconds after the last update before an editor is considered gone. Never less than twice the heartbeat interval."
+		},
+		"EditingPresenceCacheId": {
+			"value": "",
+			"description": "Key of an entry in $wgObjectCaches used to store presence data. An empty string uses the main object stash ($wgMainStash)."
+		},
+		"EditingPresencePushBackend": {
+			"value": "",
+			"description": "Name of the push backend that wakes other editors instantly, for example nchan. An empty string uses polling only."
+		},
+		"EditingPresenceNchanSubscribeUrl": {
+			"value": "",
+			"description": "Address browsers subscribe to, without the channel id, for example /editingpresence/sub. Relative addresses are resolved against the wiki."
+		},
+		"EditingPresenceNchanPublishUrl": {
+			"value": "",
+			"description": "Address PHP publishes to, without the channel id, for example http://127.0.0.1/editingpresence/pub. Must not be reachable from outside."
+		},
+		"EditingPresenceNchanSecret": {
+			"value": "",
+			"description": "Secret used to derive unguessable channel ids. Set it to a long random string in LocalSettings.php. Push stays off while it is empty."
+		},
+		"EditingPresenceNchanProtocol": {
+			"value": "websocket",
+			"description": "How browsers connect to Nchan, either websocket or sse."
+		}
+	},
+	"manifest_version": 2
+}

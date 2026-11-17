@@ -1,0 +1,15 @@
+{
+	"@metadata": {
+		"authors": []
+	},
+	"apihelp-editingpresence-example-heartbeat": "Report an editor open on section 2 of the Main Page.",
+	"apihelp-editingpresence-example-leave": "Report that an editor was closed.",
+	"apihelp-editingpresence-param-clientid": "Random identifier of this open editor.",
+	"apihelp-editingpresence-param-section": "Section being edited. Empty for the whole page.",
+	"apihelp-editingpresence-param-task": "What to do.",
+	"apihelp-editingpresence-param-title": "Title of the page being edited.",
+	"apihelp-editingpresence-paramvalue-task-heartbeat": "Report that the editor is open and return the other editors.",
+	"apihelp-editingpresence-paramvalue-task-leave": "Report that the editor was closed.",
+	"apihelp-editingpresence-paramvalue-task-refresh": "Return the other editors without recording anything.",
+	"apihelp-editingpresence-summary": "Internal module used by the editors to report that a page is open for editing and to list the other editors."
+}

@@ -1,0 +1,15 @@
+{
+	"@metadata": {
+		"authors": []
+	},
+	"editingpresence-anonymous-count": "Used in a list of editor names to stand for logged out editors.\n\nParameters:\n* $1 - number of anonymous editors",
+	"editingpresence-desc": "{{desc|name=EditingPresence|url=https://www.mediawiki.org/wiki/Extension:EditingPresence}}",
+	"editingpresence-page-page-count": "Same as {{msg-mw|editingpresence-page-page-named}} but used when names are hidden.\n\nParameters:\n* $1 - number of other editors",
+	"editingpresence-page-page-named": "Notice shown to a user editing the whole page. Other users are editing the whole page too.\n\nParameters:\n* $1 - list of names, for example \"Alice, Bob and 2 anonymous users\"\n* $2 - number of other editors, for PLURAL",
+	"editingpresence-page-section-count": "Same as {{msg-mw|editingpresence-page-section-named}} but used when names are hidden.\n\nParameters:\n* $1 - number of other editors",
+	"editingpresence-page-section-named": "Notice shown to a user editing the whole page. Other users are editing a section of the page.\n\nParameters:\n* $1 - list of names\n* $2 - number of other editors, for PLURAL",
+	"editingpresence-section-page-count": "Same as {{msg-mw|editingpresence-section-page-named}} but used when names are hidden.\n\nParameters:\n* $1 - number of other editors",
+	"editingpresence-section-page-named": "Notice shown to a user editing a single section. Other users are editing the whole page.\n\nParameters:\n* $1 - list of names\n* $2 - number of other editors, for PLURAL",
+	"editingpresence-section-section-count": "Same as {{msg-mw|editingpresence-section-section-named}} but used when names are hidden.\n\nParameters:\n* $1 - number of other editors",
+	"editingpresence-section-section-named": "Notice shown to a user editing a single section. Other users are editing the same section.\n\nParameters:\n* $1 - list of names\n* $2 - number of other editors, for PLURAL"
+}
