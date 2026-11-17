@@ -41,10 +41,14 @@
 	"HookHandlers": {
 		"editpage": {
 			"class": "MediaWiki\\Extension\\EditingPresence\\Hooks\\EditPageHooks"
+		},
+		"pagedisplay": {
+			"class": "MediaWiki\\Extension\\EditingPresence\\Hooks\\PageDisplayHooks"
 		}
 	},
 	"Hooks": {
-		"EditPage::showEditForm:initial": "editpage"
+		"EditPage::showEditForm:initial": "editpage",
+		"BeforePageDisplay": "pagedisplay"
 	},
 	"attributes": {
 		"EditingPresence": {
@@ -126,6 +130,11 @@
 			],
 			"dependencies": [
 				"ext.editingPresence"
+			]
+		},
+		"ext.editingPresence.mobile": {
+			"packageFiles": [
+				"ext.editingPresence.mobile/init.js"
 			]
 		}
 	},
