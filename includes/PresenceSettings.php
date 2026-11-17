@@ -29,7 +29,10 @@ final readonly class PresenceSettings {
 
 	public static function fromConfig( Config $config ): self {
 		$interval = max( self::MIN_INTERVAL, (int)$config->get( ConfigNames::HeartbeatInterval ) );
-		$active = min( $interval, max( self::MIN_ACTIVE_INTERVAL, (int)$config->get( ConfigNames::ActiveHeartbeatInterval ) ) );
+		$active = min(
+			$interval,
+			max( self::MIN_ACTIVE_INTERVAL, (int)$config->get( ConfigNames::ActiveHeartbeatInterval ) )
+		);
 		$timeout = max( $interval * 2, (int)$config->get( ConfigNames::Timeout ) );
 
 		return new self(
