@@ -10,8 +10,6 @@ use function is_string;
 
 /**
  * Reads avatars uploaded through the UserProfileV2 extension.
- *
- * @phan-file-suppress PhanUndeclaredClassMethod,PhanUndeclaredClassReference,PhanUndeclaredUseNormal
  */
 final class UserProfileV2AvatarProvider implements AvatarProvider {
 
