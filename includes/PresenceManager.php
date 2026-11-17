@@ -112,7 +112,7 @@ final class PresenceManager {
 	 * Only ever called for editors whose name is being shown, so none of this
 	 * reveals anything the name does not.
 	 *
-	 * @return array<string, bool|int|string>
+	 * @return array<string, mixed>
 	 */
 	private function richDetails( PresenceEntry $other, int $now ): array {
 		$details = [ 'hue' => crc32( $other->userName ) % 360 ];
