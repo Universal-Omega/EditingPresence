@@ -11,6 +11,7 @@ use MediaWiki\Extension\EditingPresence\PresenceEntry;
 use MediaWiki\Extension\EditingPresence\PresenceManager;
 use MediaWiki\Extension\EditingPresence\PresenceSettings;
 use MediaWiki\Extension\EditingPresence\Push\PushBackend;
+use MediaWiki\Permissions\PermissionStatus;
 use MediaWiki\Title\TitleFactory;
 use Wikimedia\ParamValidator\ParamValidator;
 use Wikimedia\Timestamp\ConvertibleTimestamp;
@@ -70,7 +71,11 @@ final class ApiEditingPresence extends ApiBase {
 			$this->dieBadParameter( 'section' );
 		}
 
-		$this->checkTitleUserPermissions( $title, 'edit', options: [] );
+		// A write mode module would count every call towards the edit rate limit.
+		$status = new PermissionStatus();
+		if ( !$this->getAuthority()->definitelyCan( 'edit', $title, $status ) ) {
+			$this->dieStatus( $status );
+		}
 
 		$user = $this->getUser();
 		$now = ConvertibleTimestamp::time();
