@@ -1,5 +1,10 @@
 @avatar-size: 24px;
 
+// Escaped so less.php leaves the modern color syntax and var() alone.
+@avatar-color: ~'hsl( var( --ext-editingpresence-hue, 0 ) 65% 45% )';
+@pulse-start: ~'hsl( var( --ext-editingpresence-hue, 0 ) 65% 45% / 60% )';
+@pulse-end: ~'hsl( var( --ext-editingpresence-hue, 0 ) 65% 45% / 0% )';
+
 .ext-editingpresence-banner {
 	margin-bottom: 16px;
 
@@ -25,10 +30,10 @@
 	box-sizing: border-box;
 	align-items: center;
 	justify-content: center;
-	border: 2px solid hsl( var( --ext-editingpresence-hue, 0 ) 65% 45% );
+	border: 2px solid @avatar-color;
 	border-radius: 50%;
 	margin-right: -6px;
-	background-color: hsl( var( --ext-editingpresence-hue, 0 ) 65% 45% );
+	background-color: @avatar-color;
 	color: #fff;
 	font-size: 0.85em;
 	font-weight: bold;
@@ -52,11 +57,11 @@
 @keyframes ext-editingpresence-pulse {
 	0%,
 	100% {
-		box-shadow: 0 0 0 0 hsl( var( --ext-editingpresence-hue, 0 ) 65% 45% / 60% );
+		box-shadow: 0 0 0 0 @pulse-start;
 	}
 
 	50% {
-		box-shadow: 0 0 0 4px hsl( var( --ext-editingpresence-hue, 0 ) 65% 45% / 0% );
+		box-shadow: 0 0 0 4px @pulse-end;
 	}
 }
 
