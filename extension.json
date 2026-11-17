@@ -1,13 +1,10 @@
 {
 	"name": "EditingPresence",
 	"version": "1.0.0",
-	"author": [
-		"EditingPresence contributors",
-		"Universal Omega"
-	],
+	"author": "Universal Omega",
 	"url": "https://www.mediawiki.org/wiki/Extension:EditingPresence",
 	"descriptionmsg": "editingpresence-desc",
-	"license-name": "GPL-2.0-or-later",
+	"license-name": "GPL-3.0-or-later",
 	"type": "other",
 	"requires": {
 		"MediaWiki": ">= 1.47.0",
