@@ -8,7 +8,7 @@ class PresenceBanner {
 	constructor() {
 		this.$content = $( '<div>' ).addClass( 'cdx-message__content' );
 		this.$element = $( '<div>' )
-			.addClass( 'cdx-message cdx-message--block cdx-message--warning ext-editingpresence-banner' )
+			.addClass( 'cdx-message cdx-message--block cdx-message--notice ext-editingpresence-banner' )
 			.attr( { role: 'status', 'aria-live': 'polite' } )
 			.append( $( '<span>' ).addClass( 'cdx-message__icon' ), this.$content )
 			.hide();
