@@ -69,7 +69,9 @@ class PresenceManagerTest extends MediaWikiUnitTestCase {
 	}
 
 	/**
+	 * @param PresenceManager $manager
 	 * @param list<PresenceEntry> $others
+	 * @param PresenceEntry $viewer
 	 * @return list<array{group: string, anonymous: bool, username?: string}>
 	 */
 	private function viewFor(
