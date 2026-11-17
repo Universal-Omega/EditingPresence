@@ -116,12 +116,9 @@
 				"mediawiki.codex.messagebox.styles"
 			]
 		},
-		"ext.editingPresence.wikitext": {
+		"ext.editingPresence.mobile": {
 			"packageFiles": [
-				"ext.editingPresence.wikitext/init.js"
-			],
-			"dependencies": [
-				"ext.editingPresence"
+				"ext.editingPresence.mobile/init.js"
 			]
 		},
 		"ext.editingPresence.ve": {
@@ -132,9 +129,12 @@
 				"ext.editingPresence"
 			]
 		},
-		"ext.editingPresence.mobile": {
+		"ext.editingPresence.wikitext": {
 			"packageFiles": [
-				"ext.editingPresence.mobile/init.js"
+				"ext.editingPresence.wikitext/init.js"
+			],
+			"dependencies": [
+				"ext.editingPresence"
 			]
 		}
 	},
