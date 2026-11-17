@@ -101,4 +101,31 @@ class ApiEditingPresenceTest extends ApiTestCase {
 		$this->assertArrayNotHasKey( 'push', $result );
 		$this->assertSame( 3, $result['activeinterval'] );
 	}
+
+	public function testRichDetailsAndTypingReachOtherEditors(): void {
+		$this->overrideConfigValue( ConfigNames::ShowUsernames, true );
+
+		[ $first ] = $this->doApiRequestWithToken( [
+			'action' => 'editingpresence',
+			'task' => 'heartbeat',
+			'title' => self::PAGE,
+			'section' => '',
+			'clientid' => 'aaaaaaaa01',
+			'typing' => 1,
+		], null, $this->getTestUser()->getUser(), 'csrf' );
+		$this->assertTrue( $first['editingpresence']['typingenabled'] );
+
+		$second = $this->request( 'heartbeat', 'bbbbbbbb02', '', true );
+
+		$this->assertTrue( $second['editors'][0]['typing'] );
+		$this->assertIsInt( $second['editors'][0]['hue'] );
+	}
+
+	public function testTypingIsDisabledWithoutRichPresence(): void {
+		$this->overrideConfigValue( ConfigNames::RichPresence, false );
+
+		$result = $this->request( 'heartbeat', 'aaaaaaaa01', '', false );
+
+		$this->assertFalse( $result['typingenabled'] );
+	}
 }
