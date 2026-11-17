@@ -21,14 +21,17 @@ class PresenceSettingsTest extends MediaWikiUnitTestCase {
 	private function newSettings( array $overrides ): PresenceSettings {
 		return PresenceSettings::fromConfig( new HashConfig( $overrides + [
 			ConfigNames::ActiveHeartbeatInterval => 3,
+			ConfigNames::AvatarProvider => 'userprofilev2',
 			ConfigNames::CacheId => '',
 			ConfigNames::HeartbeatInterval => 20,
 			ConfigNames::IncludeOwnOtherSessions => false,
 			ConfigNames::MaxListedNames => 5,
+			ConfigNames::RichPresence => true,
 			ConfigNames::SectionIncludeSameSectionEditors => true,
 			ConfigNames::SectionIncludeWholePageEditors => true,
 			ConfigNames::ShowUsernames => true,
 			ConfigNames::Timeout => 60,
+			ConfigNames::TypingIndicator => true,
 		] ) );
 	}
 
@@ -49,6 +52,21 @@ class PresenceSettingsTest extends MediaWikiUnitTestCase {
 		$this->assertSame( 20, $settings->heartbeatInterval );
 		$this->assertSame( 3, $settings->activeHeartbeatInterval );
 		$this->assertSame( 60, $settings->timeout );
+		$this->assertTrue( $settings->richPresence );
+		$this->assertTrue( $settings->typingIndicator );
+		$this->assertSame( 'userprofilev2', $settings->avatarProvider );
+	}
+
+	public function testRichPresenceOptionsAreRead(): void {
+		$settings = $this->newSettings( [
+			ConfigNames::AvatarProvider => '',
+			ConfigNames::RichPresence => false,
+			ConfigNames::TypingIndicator => false,
+		] );
+
+		$this->assertFalse( $settings->richPresence );
+		$this->assertFalse( $settings->typingIndicator );
+		$this->assertSame( '', $settings->avatarProvider );
 	}
 
 	public function testMaxListedNamesHasAFloor(): void {
