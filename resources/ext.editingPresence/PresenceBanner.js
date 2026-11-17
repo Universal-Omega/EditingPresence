@@ -43,16 +43,18 @@ class PresenceBanner {
 			}
 		} );
 
-		const $avatars = this.buildAvatars( listed );
-		if ( $avatars ) {
-			this.$content.append( $avatars );
-		}
-		this.$content.append( lines );
-
+		const $text = $( '<div>' ).addClass( 'ext-editingpresence-text' ).append( lines );
 		const $typing = this.buildTyping( listed );
 		if ( $typing ) {
-			this.$content.append( $typing );
+			$text.append( $typing );
 		}
+
+		const $row = $( '<div>' ).addClass( 'ext-editingpresence-row' );
+		const $avatars = this.buildAvatars( listed );
+		if ( $avatars ) {
+			$row.append( $avatars );
+		}
+		this.$content.append( $row.append( $text ) );
 
 		this.$element.toggle( lines.length > 0 );
 	}
