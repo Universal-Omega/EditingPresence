@@ -2,6 +2,12 @@
 
 const transports = require( './transports.js' );
 
+// Seconds after the last key press until the editor stops counting as typing.
+const TYPING_IDLE = 5;
+
+// While typing, how often the server is reminded. It forgets typing after ten seconds.
+const TYPING_REFRESH = 4;
+
 /**
  * Keeps one open editor registered on the server and reports who else is
  * editing. It polls, quickly while others are present and slowly otherwise,
@@ -15,6 +21,7 @@ class PresenceTracker {
 	 * @param {number} options.interval Seconds between updates until the server says otherwise.
 	 * @param {Function} options.getSection Returns the section, or '' for the whole page.
 	 * @param {Function} options.onUpdate Called with the API response data.
+	 * @param {Function} [options.getTypingRoot] Returns the jQuery element watched for key presses.
 	 */
 	constructor( options ) {
 		this.pageName = options.pageName;
@@ -32,8 +39,16 @@ class PresenceTracker {
 		this.pushConnected = false;
 		this.refreshing = false;
 		this.refreshQueued = false;
+		this.getTypingRoot = options.getTypingRoot || null;
+		this.$typingRoot = null;
+		this.typingEnabled = false;
+		this.typing = false;
+		this.typingTimer = null;
+		this.typingSentAt = 0;
+		this.onKey = this.handleKey.bind( this );
 		this.onPageHide = this.sendLeaveBeacon.bind( this );
 		this.onPageShow = this.handlePageShow.bind( this );
+		this.onVisibility = this.handleVisibility.bind( this );
 	}
 
 	start() {
@@ -43,6 +58,8 @@ class PresenceTracker {
 		this.running = true;
 		window.addEventListener( 'pagehide', this.onPageHide );
 		window.addEventListener( 'pageshow', this.onPageShow );
+		document.addEventListener( 'visibilitychange', this.onVisibility );
+		this.watchTyping();
 		this.beat();
 	}
 
@@ -52,8 +69,11 @@ class PresenceTracker {
 		}
 		this.running = false;
 		window.clearTimeout( this.timer );
+		window.clearTimeout( this.typingTimer );
+		this.unwatchTyping();
 		window.removeEventListener( 'pagehide', this.onPageHide );
 		window.removeEventListener( 'pageshow', this.onPageShow );
+		document.removeEventListener( 'visibilitychange', this.onVisibility );
 		this.stopTransport();
 		this.api.postWithToken( 'csrf', this.getParams( 'leave', '' ) ).then(
 			() => {},
@@ -106,6 +126,7 @@ class PresenceTracker {
 		this.idleInterval = data.interval || this.idleInterval;
 		this.activeInterval = data.activeinterval || this.idleInterval;
 		this.othersPresent = ( data.editors || [] ).length > 0;
+		this.typingEnabled = !!data.typingenabled;
 		this.updateTransport( data.push || null );
 		this.onUpdate( data );
 	}
@@ -168,7 +189,63 @@ class PresenceTracker {
 			return;
 		}
 		this.pushConnected = connected;
+		mw.log( 'EditingPresence push ' + ( connected ? 'connected' : 'disconnected' ) );
 		this.schedule();
+	}
+
+	watchTyping() {
+		this.$typingRoot = this.getTypingRoot ? this.getTypingRoot() : null;
+		if ( this.$typingRoot ) {
+			this.$typingRoot.on( 'keydown.editingPresence input.editingPresence', this.onKey );
+		}
+	}
+
+	unwatchTyping() {
+		if ( this.$typingRoot ) {
+			this.$typingRoot.off( '.editingPresence' );
+			this.$typingRoot = null;
+		}
+	}
+
+	handleKey( event ) {
+		if ( !this.typingEnabled || event.ctrlKey || event.metaKey ) {
+			return;
+		}
+		// Input events carry no key. Key presses only count when they change the text.
+		const key = event.key;
+		if ( key && key.length > 1 && key !== 'Backspace' && key !== 'Delete' && key !== 'Enter' ) {
+			return;
+		}
+
+		window.clearTimeout( this.typingTimer );
+		this.typingTimer = window.setTimeout( () => {
+			this.setTyping( false );
+		}, TYPING_IDLE * 1000 );
+		this.setTyping( true );
+
+		if ( this.typing && Date.now() - this.typingSentAt >= TYPING_REFRESH * 1000 ) {
+			this.typingSentAt = Date.now();
+			this.beat();
+		}
+	}
+
+	setTyping( typing ) {
+		if ( typing === this.typing ) {
+			return;
+		}
+		this.typing = typing;
+		this.typingSentAt = Date.now();
+		this.beat();
+	}
+
+	handleVisibility() {
+		if ( document.visibilityState !== 'visible' ) {
+			return;
+		}
+		// Timers and sockets are frozen while a phone sleeps and often come back dead.
+		this.stopTransport();
+		this.pushKey = '';
+		this.beat();
 	}
 
 	handlePageShow( event ) {
@@ -191,7 +268,7 @@ class PresenceTracker {
 	}
 
 	getParams( task, section ) {
-		return {
+		const params = {
 			action: 'editingpresence',
 			task: task,
 			title: this.pageName,
@@ -200,6 +277,11 @@ class PresenceTracker {
 			format: 'json',
 			formatversion: 2
 		};
+		// Boolean API parameters are true whenever they are present.
+		if ( task === 'heartbeat' && this.typing ) {
+			params.typing = 1;
+		}
+		return params;
 	}
 }
 
