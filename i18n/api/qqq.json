@@ -1,6 +1,8 @@
 {
 	"@metadata": {
-		"authors": []
+		"authors": [
+			"Universal Omega",
+		]
 	},
 	"apihelp-editingpresence-example-heartbeat": "{{doc-apihelp-example|editingpresence}}",
 	"apihelp-editingpresence-example-leave": "{{doc-apihelp-example|editingpresence}}",
@@ -8,6 +10,7 @@
 	"apihelp-editingpresence-param-section": "{{doc-apihelp-param|editingpresence|section}}",
 	"apihelp-editingpresence-param-task": "{{doc-apihelp-param|editingpresence|task}}",
 	"apihelp-editingpresence-param-title": "{{doc-apihelp-param|editingpresence|title}}",
+	"apihelp-editingpresence-param-typing": "{{doc-apihelp-param|editingpresence|typing}}",
 	"apihelp-editingpresence-paramvalue-task-heartbeat": "{{doc-apihelp-paramvalue|editingpresence|task|heartbeat}}",
 	"apihelp-editingpresence-paramvalue-task-leave": "{{doc-apihelp-paramvalue|editingpresence|task|leave}}",
 	"apihelp-editingpresence-paramvalue-task-refresh": "{{doc-apihelp-paramvalue|editingpresence|task|refresh}}",
