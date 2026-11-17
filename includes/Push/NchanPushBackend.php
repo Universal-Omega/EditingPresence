@@ -45,7 +45,7 @@ final class NchanPushBackend implements PushBackend {
 		return [
 			'type' => 'nchan',
 			'protocol' => $this->settings->nchanProtocol,
-			'url' => $this->channelUrl( base: $this->settings->nchanSubscribeUrl, pageKey: $pageKey ),
+			'url' => $this->channelUrl( $this->settings->nchanSubscribeUrl, $pageKey ),
 		];
 	}
 
@@ -56,14 +56,14 @@ final class NchanPushBackend implements PushBackend {
 		}
 
 		DeferredUpdates::addCallableUpdate(
-			fn () => $this->publishNow( pageKey: $pageKey ),
+			fn () => $this->publishNow( $pageKey ),
 			DeferredUpdates::POSTSEND,
 			[]
 		);
 	}
 
 	public function publishNow( string $pageKey ): void {
-		$url = $this->channelUrl( base: $this->settings->nchanPublishUrl, pageKey: $pageKey );
+		$url = $this->channelUrl( $this->settings->nchanPublishUrl, $pageKey );
 
 		$response = $this->http->post(
 			url: $url,
@@ -85,7 +85,7 @@ final class NchanPushBackend implements PushBackend {
 	}
 
 	private function channelUrl( string $base, string $pageKey ): string {
-		return rtrim( $base, '/' ) . '/' . $this->getChannelId( pageKey: $pageKey );
+		return rtrim( $base, '/' ) . '/' . $this->getChannelId( $pageKey );
 	}
 
 	private function isConfigured(): bool {
