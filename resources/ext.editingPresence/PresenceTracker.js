@@ -8,15 +8,11 @@ const TYPING_IDLE = 5;
 // While typing, how often the server is reminded. It forgets typing after ten seconds.
 const TYPING_REFRESH = 4;
 
-// With a push connection and others present, the longest wait between updates. This
-// covers connections that die without telling the browser, as happens on phones.
-const PUSH_SAFETY_INTERVAL = 8;
-
 /**
  * Keeps one open editor registered on the server and reports who else is
  * editing. It polls, quickly while others are present and slowly otherwise,
  * and when the server offers a push connection it refreshes on demand and only
- * polls now and then as a safety net.
+ * sends a slow keepalive.
  */
 class PresenceTracker {
 	/**
@@ -136,11 +132,8 @@ class PresenceTracker {
 	}
 
 	getCurrentInterval() {
-		if ( !this.othersPresent ) {
+		if ( this.pushConnected || !this.othersPresent ) {
 			return this.idleInterval;
-		}
-		if ( this.pushConnected ) {
-			return Math.min( this.idleInterval, PUSH_SAFETY_INTERVAL );
 		}
 		return this.activeInterval;
 	}
