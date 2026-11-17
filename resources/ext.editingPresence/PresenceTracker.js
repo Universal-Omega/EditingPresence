@@ -5,11 +5,18 @@ const transports = require( './transports.js' );
 // Seconds after the last key press until the editor stops counting as typing.
 const TYPING_IDLE = 5;
 
+// While typing, how often the server is reminded. It forgets typing after ten seconds.
+const TYPING_REFRESH = 4;
+
+// With a push connection and others present, the longest wait between updates. This
+// covers connections that die without telling the browser, as happens on phones.
+const PUSH_SAFETY_INTERVAL = 8;
+
 /**
  * Keeps one open editor registered on the server and reports who else is
  * editing. It polls, quickly while others are present and slowly otherwise,
  * and when the server offers a push connection it refreshes on demand and only
- * sends a slow keepalive.
+ * polls now and then as a safety net.
  */
 class PresenceTracker {
 	/**
@@ -41,9 +48,11 @@ class PresenceTracker {
 		this.typingEnabled = false;
 		this.typing = false;
 		this.typingTimer = null;
+		this.typingSentAt = 0;
 		this.onKey = this.handleKey.bind( this );
 		this.onPageHide = this.sendLeaveBeacon.bind( this );
 		this.onPageShow = this.handlePageShow.bind( this );
+		this.onVisibility = this.handleVisibility.bind( this );
 	}
 
 	start() {
@@ -53,6 +62,7 @@ class PresenceTracker {
 		this.running = true;
 		window.addEventListener( 'pagehide', this.onPageHide );
 		window.addEventListener( 'pageshow', this.onPageShow );
+		document.addEventListener( 'visibilitychange', this.onVisibility );
 		this.watchTyping();
 		this.beat();
 	}
@@ -67,6 +77,7 @@ class PresenceTracker {
 		this.unwatchTyping();
 		window.removeEventListener( 'pagehide', this.onPageHide );
 		window.removeEventListener( 'pageshow', this.onPageShow );
+		document.removeEventListener( 'visibilitychange', this.onVisibility );
 		this.stopTransport();
 		this.api.postWithToken( 'csrf', this.getParams( 'leave', '' ) ).then(
 			() => {},
@@ -125,8 +136,11 @@ class PresenceTracker {
 	}
 
 	getCurrentInterval() {
-		if ( this.pushConnected || !this.othersPresent ) {
+		if ( !this.othersPresent ) {
 			return this.idleInterval;
+		}
+		if ( this.pushConnected ) {
+			return Math.min( this.idleInterval, PUSH_SAFETY_INTERVAL );
 		}
 		return this.activeInterval;
 	}
@@ -182,6 +196,7 @@ class PresenceTracker {
 			return;
 		}
 		this.pushConnected = connected;
+		mw.log( 'EditingPresence push ' + ( connected ? 'connected' : 'disconnected' ) );
 		this.schedule();
 	}
 
@@ -214,6 +229,11 @@ class PresenceTracker {
 			this.setTyping( false );
 		}, TYPING_IDLE * 1000 );
 		this.setTyping( true );
+
+		if ( this.typing && Date.now() - this.typingSentAt >= TYPING_REFRESH * 1000 ) {
+			this.typingSentAt = Date.now();
+			this.beat();
+		}
 	}
 
 	setTyping( typing ) {
@@ -221,6 +241,17 @@ class PresenceTracker {
 			return;
 		}
 		this.typing = typing;
+		this.typingSentAt = Date.now();
+		this.beat();
+	}
+
+	handleVisibility() {
+		if ( document.visibilityState !== 'visible' ) {
+			return;
+		}
+		// Timers and sockets are frozen while a phone sleeps and often come back dead.
+		this.stopTransport();
+		this.pushKey = '';
 		this.beat();
 	}
 
