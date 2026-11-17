@@ -7,6 +7,12 @@ namespace MediaWiki\Extension\EditingPresence\Tests\Unit;
 use MediaWiki\Extension\EditingPresence\ConfigNames;
 use MediaWikiUnitTestCase;
 use ReflectionClass;
+use function array_keys;
+use function array_values;
+use function file_get_contents;
+use function json_decode;
+use function sort;
+use const JSON_THROW_ON_ERROR;
 
 /**
  * @group EditingPresence
@@ -16,10 +22,11 @@ class ConfigNamesTest extends MediaWikiUnitTestCase {
 
 	public function testNamesMatchExtensionJson(): void {
 		$json = file_get_contents( __DIR__ . '/../../../extension.json' );
-		$manifest = json_decode( $json, associative: true, depth: 512, flags: JSON_THROW_ON_ERROR );
+		/** @var array{config: array<string, mixed>} $manifest */
+		$manifest = json_decode( $json, associative: true, flags: JSON_THROW_ON_ERROR );
 
 		$declared = array_keys( $manifest['config'] );
-		$constants = array_values( ( new ReflectionClass( ConfigNames::class ) )->getConstants( filter: null ) );
+		$constants = array_values( ( new ReflectionClass( ConfigNames::class ) )->getConstants() );
 
 		sort( $declared );
 		sort( $constants );
