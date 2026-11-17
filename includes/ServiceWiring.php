@@ -2,22 +2,21 @@
 
 declare( strict_types=1 );
 
+use MediaWiki\Extension\EditingPresence\PresenceManager;
+use MediaWiki\Extension\EditingPresence\PresenceSettings;
 use MediaWiki\Extension\EditingPresence\Push\NullPushBackend;
 use MediaWiki\Extension\EditingPresence\Push\PushBackend;
 use MediaWiki\Extension\EditingPresence\Push\PushSettings;
-use MediaWiki\Extension\EditingPresence\PresenceManager;
-use MediaWiki\Extension\EditingPresence\PresenceSettings;
 use MediaWiki\Logger\LoggerFactory;
 use MediaWiki\MediaWikiServices;
-use MediaWiki\Registration\ExtensionRegistry;
 
 return [
 	'EditingPresence.Settings' => static function ( MediaWikiServices $services ): PresenceSettings {
-		return PresenceSettings::fromConfig( config: $services->getMainConfig() );
+		return PresenceSettings::fromConfig( $services->getMainConfig() );
 	},
 
 	'EditingPresence.PushSettings' => static function ( MediaWikiServices $services ): PushSettings {
-		return PushSettings::fromConfig( config: $services->getMainConfig() );
+		return PushSettings::fromConfig( $services->getMainConfig() );
 	},
 
 	'EditingPresence.PushBackend' => static function ( MediaWikiServices $services ): PushBackend {
@@ -27,7 +26,7 @@ return [
 			return new NullPushBackend();
 		}
 
-		$specs = ExtensionRegistry::getInstance()->getAttribute( 'EditingPresencePushBackends' );
+		$specs = $services->getExtensionRegistry()->getAttribute( 'EditingPresencePushBackends' );
 		if ( !isset( $specs[$settings->backend] ) ) {
 			LoggerFactory::getInstance( 'EditingPresence' )->warning(
 				'Unknown push backend {backend}, falling back to polling',
@@ -37,8 +36,8 @@ return [
 		}
 
 		return $services->getObjectFactory()->createObject(
-			spec: $specs[$settings->backend],
-			options: [ 'assertClass' => PushBackend::class ]
+			$specs[$settings->backend],
+			[ 'assertClass' => PushBackend::class ]
 		);
 	},
 
@@ -50,8 +49,8 @@ return [
 
 		$store = $settings->cacheId === ''
 			? $services->getMainObjectStash()
-			: $services->getObjectCacheFactory()->getInstance( id: $settings->cacheId );
+			: $services->getObjectCacheFactory()->getInstance( $settings->cacheId );
 
-		return new PresenceManager( settings: $settings, store: $store, push: $push );
+		return new PresenceManager( $settings, $store, $push );
 	},
 ];

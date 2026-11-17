@@ -8,6 +8,8 @@ use MediaWiki\Deferred\DeferredUpdates;
 use MediaWiki\Http\HttpRequestFactory;
 use MediaWiki\Logger\LoggerFactory;
 use Psr\Log\LoggerInterface;
+use function hash_hmac;
+use function rtrim;
 
 /**
  * Pushes through the Nchan module of nginx. Browsers subscribe to a channel
@@ -27,11 +29,7 @@ final class NchanPushBackend implements PushBackend {
 	}
 
 	public static function factory( PushSettings $settings, HttpRequestFactory $http ): self {
-		return new self(
-			settings: $settings,
-			http: $http,
-			logger: LoggerFactory::getInstance( 'EditingPresence' ),
-		);
+		return new self( $settings, $http, LoggerFactory::getInstance( 'EditingPresence' ) );
 	}
 
 	/** @inheritDoc */
@@ -43,7 +41,7 @@ final class NchanPushBackend implements PushBackend {
 		return [
 			'type' => 'nchan',
 			'protocol' => $this->settings->nchanProtocol,
-			'url' => $this->channelUrl( base: $this->settings->nchanSubscribeUrl, pageKey: $pageKey ),
+			'url' => $this->channelUrl( $this->settings->nchanSubscribeUrl, $pageKey ),
 		];
 	}
 
@@ -54,26 +52,20 @@ final class NchanPushBackend implements PushBackend {
 		}
 
 		DeferredUpdates::addCallableUpdate(
-			function () use ( $pageKey ): void {
-				$this->publishNow( pageKey: $pageKey );
-			},
+			fn () => $this->publishNow( $pageKey ),
 			DeferredUpdates::POSTSEND,
 			[]
 		);
 	}
 
 	public function publishNow( string $pageKey ): void {
-		$url = $this->channelUrl( base: $this->settings->nchanPublishUrl, pageKey: $pageKey );
+		$url = $this->channelUrl( $this->settings->nchanPublishUrl, $pageKey );
 
-		$response = $this->http->post(
-			url: $url,
-			options: [
-				'postData' => 'changed',
-				'timeout' => self::PUBLISH_TIMEOUT,
-				'connectTimeout' => self::PUBLISH_TIMEOUT,
-			],
-			caller: __METHOD__
-		);
+		$response = $this->http->post( $url, [
+			'postData' => 'changed',
+			'timeout' => self::PUBLISH_TIMEOUT,
+			'connectTimeout' => self::PUBLISH_TIMEOUT,
+		], __METHOD__ );
 
 		if ( $response === null ) {
 			$this->logger->warning( 'Could not publish to Nchan at {url}', [ 'url' => $url ] );
@@ -85,7 +77,7 @@ final class NchanPushBackend implements PushBackend {
 	}
 
 	private function channelUrl( string $base, string $pageKey ): string {
-		return rtrim( $base, '/' ) . '/' . $this->getChannelId( pageKey: $pageKey );
+		return rtrim( $base, '/' ) . '/' . $this->getChannelId( $pageKey );
 	}
 
 	private function isConfigured(): bool {

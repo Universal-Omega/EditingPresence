@@ -9,6 +9,7 @@ use MediaWiki\Extension\EditingPresence\Push\PushSettings;
 use MediaWiki\Http\HttpRequestFactory;
 use MediaWikiUnitTestCase;
 use Psr\Log\LoggerInterface;
+use function hash_hmac;
 
 /**
  * @group EditingPresence
@@ -31,7 +32,7 @@ class NchanPushBackendTest extends MediaWikiUnitTestCase {
 		HttpRequestFactory $http,
 		LoggerInterface $logger
 	): NchanPushBackend {
-		return new NchanPushBackend( settings: $settings, http: $http, logger: $logger );
+		return new NchanPushBackend( $settings, $http, $logger );
 	}
 
 	public function testIsOffWithoutASecret(): void {
@@ -41,7 +42,7 @@ class NchanPushBackendTest extends MediaWikiUnitTestCase {
 			$this->createNoOpMock( LoggerInterface::class, [] )
 		);
 
-		$this->assertNull( $backend->getClientConfig( pageKey: 'page' ) );
+		$this->assertNull( $backend->getClientConfig( 'page' ) );
 	}
 
 	public function testIsOffWithoutUrls(): void {
@@ -51,7 +52,7 @@ class NchanPushBackendTest extends MediaWikiUnitTestCase {
 			$this->createNoOpMock( LoggerInterface::class, [] )
 		);
 
-		$this->assertNull( $backend->getClientConfig( pageKey: 'page' ) );
+		$this->assertNull( $backend->getClientConfig( 'page' ) );
 	}
 
 	public function testClientConfigPointsAtThePageChannel(): void {
@@ -61,7 +62,7 @@ class NchanPushBackendTest extends MediaWikiUnitTestCase {
 			$this->createNoOpMock( LoggerInterface::class, [] )
 		);
 
-		$config = $backend->getClientConfig( pageKey: 'page' );
+		$config = $backend->getClientConfig( 'page' );
 
 		$this->assertNotNull( $config );
 		$this->assertSame( 'nchan', $config['type'] );
@@ -78,10 +79,10 @@ class NchanPushBackendTest extends MediaWikiUnitTestCase {
 		$one = $this->newBackend( $this->newSettings( 'one', '/sub', '/pub' ), $http, $logger );
 		$two = $this->newBackend( $this->newSettings( 'two', '/sub', '/pub' ), $http, $logger );
 
-		$this->assertSame( $one->getChannelId( pageKey: 'a' ), $one->getChannelId( pageKey: 'a' ) );
-		$this->assertNotSame( $one->getChannelId( pageKey: 'a' ), $one->getChannelId( pageKey: 'b' ) );
-		$this->assertNotSame( $one->getChannelId( pageKey: 'a' ), $two->getChannelId( pageKey: 'a' ) );
-		$this->assertMatchesRegularExpression( '/^[0-9a-f]{64}$/', $one->getChannelId( pageKey: 'a' ) );
+		$this->assertSame( $one->getChannelId( 'a' ), $one->getChannelId( 'a' ) );
+		$this->assertNotSame( $one->getChannelId( 'a' ), $one->getChannelId( 'b' ) );
+		$this->assertNotSame( $one->getChannelId( 'a' ), $two->getChannelId( 'a' ) );
+		$this->assertMatchesRegularExpression( '/^[0-9a-f]{64}$/', $one->getChannelId( 'a' ) );
 	}
 
 	public function testPublishPostsToThePageChannel(): void {
@@ -90,12 +91,11 @@ class NchanPushBackendTest extends MediaWikiUnitTestCase {
 		$http = $this->createMock( HttpRequestFactory::class );
 		$http->expects( $this->once() )
 			->method( 'post' )
-			->with(
-				$expectedUrl,
-				$this->callback( static fn ( array $options ): bool => $options['postData'] === 'changed' ),
-				$this->anything()
-			)
-			->willReturn( 'ok' );
+			->willReturnCallback( function ( string $url, array $options ) use ( $expectedUrl ): string {
+				$this->assertSame( $expectedUrl, $url );
+				$this->assertSame( 'changed', $options['postData'] );
+				return 'ok';
+			} );
 
 		$logger = $this->createNoOpMock( LoggerInterface::class, [] );
 		$backend = $this->newBackend(
@@ -104,7 +104,7 @@ class NchanPushBackendTest extends MediaWikiUnitTestCase {
 			$logger
 		);
 
-		$backend->publishNow( pageKey: 'page' );
+		$backend->publishNow( 'page' );
 	}
 
 	public function testFailedPublishIsLogged(): void {
@@ -120,6 +120,6 @@ class NchanPushBackendTest extends MediaWikiUnitTestCase {
 			$logger
 		);
 
-		$backend->publishNow( pageKey: 'page' );
+		$backend->publishNow( 'page' );
 	}
 }

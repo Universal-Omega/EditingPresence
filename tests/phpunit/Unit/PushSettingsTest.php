@@ -17,7 +17,7 @@ use MediaWikiUnitTestCase;
 class PushSettingsTest extends MediaWikiUnitTestCase {
 
 	public function testValuesAreRead(): void {
-		$settings = PushSettings::fromConfig( config: new HashConfig( [
+		$settings = PushSettings::fromConfig( new HashConfig( [
 			ConfigNames::PushBackend => 'nchan',
 			ConfigNames::NchanSubscribeUrl => '/sub',
 			ConfigNames::NchanPublishUrl => 'http://127.0.0.1/pub',
@@ -36,7 +36,7 @@ class PushSettingsTest extends MediaWikiUnitTestCase {
 	 * @dataProvider provideProtocols
 	 */
 	public function testProtocolFallsBackToWebSocket( string $configured, string $expected ): void {
-		$settings = PushSettings::fromConfig( config: new HashConfig( [
+		$settings = PushSettings::fromConfig( new HashConfig( [
 			ConfigNames::PushBackend => '',
 			ConfigNames::NchanSubscribeUrl => '',
 			ConfigNames::NchanPublishUrl => '',

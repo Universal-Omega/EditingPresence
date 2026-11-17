@@ -7,6 +7,10 @@ namespace MediaWiki\Extension\EditingPresence;
 use MediaWiki\Extension\EditingPresence\Push\PushBackend;
 use Wikimedia\ObjectCache\BagOStuff;
 use Wikimedia\Timestamp\ConvertibleTimestamp;
+use function array_map;
+use function array_values;
+use function count;
+use function is_array;
 
 /**
  * Keeps track of who has an editor open on which page, and decides what
@@ -29,11 +33,11 @@ final class PresenceManager {
 	 * @return list<PresenceEntry>
 	 */
 	public function heartbeat( string $pageKey, PresenceEntry $entry ): array {
-		return $this->update( pageKey: $pageKey, clientId: $entry->clientId, entry: $entry );
+		return $this->update( $pageKey, $entry->clientId, $entry );
 	}
 
 	public function leave( string $pageKey, string $clientId ): void {
-		$this->update( pageKey: $pageKey, clientId: $clientId, entry: null );
+		$this->update( $pageKey, $clientId, entry: null );
 	}
 
 	/**
@@ -42,14 +46,15 @@ final class PresenceManager {
 	 * @return list<PresenceEntry>
 	 */
 	public function peek( string $pageKey ): array {
-		$stored = $this->store->get( key: $this->makeKey( pageKey: $pageKey ), flags: 0 );
+		$stored = $this->store->get( $this->makeKey( $pageKey ), flags: 0 );
 
 		return array_values(
-			$this->activeEntries( stored: $stored, now: ConvertibleTimestamp::time() )
+			$this->activeEntries( $stored, ConvertibleTimestamp::time() )
 		);
 	}
 
 	/**
+	 * @param PresenceEntry $viewer
 	 * @param list<PresenceEntry> $entries
 	 * @return list<array{group: string, anonymous: bool, username?: string}>
 	 */
@@ -69,7 +74,7 @@ final class PresenceManager {
 				continue;
 			}
 
-			$group = $this->classify( viewer: $viewer, other: $other );
+			$group = $this->classify( $viewer, $other );
 			if ( $group === null ) {
 				continue;
 			}
@@ -119,18 +124,22 @@ final class PresenceManager {
 	 * @return list<PresenceEntry>
 	 */
 	private function update( string $pageKey, string $clientId, ?PresenceEntry $entry ): array {
-		$key = $this->makeKey( pageKey: $pageKey );
+		$key = $this->makeKey( $pageKey );
 		$now = ConvertibleTimestamp::time();
 		$timeout = $this->settings->timeout;
 		$result = [];
 		$changed = false;
 
 		$merged = $this->store->merge(
-			key: $key,
-			callback: function ( BagOStuff $cache, string $key, mixed $current, int &$ttl ) use (
+			$key,
+			/**
+			 * @param BagOStuff $cache @phan-unused-param
+			 * @param string $key @phan-unused-param
+			 */
+			function ( BagOStuff $cache, string $key, mixed $current, int &$ttl ) use (
 				&$result, &$changed, $clientId, $entry, $now, $timeout
 			): array {
-				$entries = $this->activeEntries( stored: $current, now: $now );
+				$entries = $this->activeEntries( $current, $now );
 				$previous = $entries[$clientId] ?? null;
 				$dropped = is_array( $current ) && count( $current ) > count( $entries );
 
@@ -140,7 +149,7 @@ final class PresenceManager {
 					unset( $entries[$clientId] );
 				}
 
-				$changed = $dropped || $this->differs( previous: $previous, entry: $entry );
+				$changed = $dropped || $this->differs( $previous, $entry );
 				$result = array_values( $entries );
 				$ttl = $timeout;
 
@@ -156,13 +165,13 @@ final class PresenceManager {
 
 		if ( $merged ) {
 			if ( $changed ) {
-				$this->push->publishChange( pageKey: $pageKey );
+				$this->push->publishChange( $pageKey );
 			}
 			return $result;
 		}
 
-		$stored = $this->store->get( key: $key, flags: 0 );
-		$entries = $this->activeEntries( stored: $stored, now: $now );
+		$stored = $this->store->get( $key, flags: 0 );
+		$entries = $this->activeEntries( $stored, $now );
 		if ( $entry !== null ) {
 			$entries[$entry->clientId] = $entry;
 		} else {
@@ -181,7 +190,11 @@ final class PresenceManager {
 			return $previous !== null;
 		}
 
-		return $previous === null || $previous->section !== $entry->section;
+		if ( $previous === null ) {
+			return true;
+		}
+
+		return $previous->section !== $entry->section;
 	}
 
 	/**
@@ -194,7 +207,7 @@ final class PresenceManager {
 
 		$active = [];
 		foreach ( $stored as $raw ) {
-			$entry = is_array( $raw ) ? PresenceEntry::fromArray( data: $raw ) : null;
+			$entry = is_array( $raw ) ? PresenceEntry::fromArray( $raw ) : null;
 			if ( $entry === null ) {
 				continue;
 			}

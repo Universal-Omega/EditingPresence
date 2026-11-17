@@ -40,7 +40,7 @@
 	},
 	"HookHandlers": {
 		"editpage": {
-			"class": "MediaWiki\\Extension\\EditingPresence\\Hook\\EditPageHooks"
+			"class": "MediaWiki\\Extension\\EditingPresence\\Hooks\\EditPageHooks"
 		}
 	},
 	"Hooks": {

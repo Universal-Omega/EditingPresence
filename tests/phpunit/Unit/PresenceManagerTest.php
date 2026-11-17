@@ -11,6 +11,8 @@ use MediaWiki\Extension\EditingPresence\PresenceSettings;
 use MediaWikiUnitTestCase;
 use Wikimedia\ObjectCache\HashBagOStuff;
 use Wikimedia\Timestamp\ConvertibleTimestamp;
+use function array_map;
+use function count;
 
 /**
  * @group EditingPresence
@@ -40,18 +42,19 @@ class PresenceManagerTest extends MediaWikiUnitTestCase {
 		bool $ownSessions
 	): PresenceManager {
 		return new PresenceManager(
-			settings: new PresenceSettings(
+			new PresenceSettings(
 				showUsernames: $names,
 				sectionIncludesWholePageEditors: $wholePage,
 				sectionIncludesSameSectionEditors: $sameSection,
 				includeOwnOtherSessions: $ownSessions,
 				maxListedNames: 5,
 				heartbeatInterval: 20,
+				activeHeartbeatInterval: 3,
 				timeout: 60,
 				cacheId: '',
 			),
-			store: new HashBagOStuff( [] ),
-			push: $this->push,
+			new HashBagOStuff( [] ),
+			$this->push,
 		);
 	}
 
@@ -66,7 +69,9 @@ class PresenceManagerTest extends MediaWikiUnitTestCase {
 	}
 
 	/**
+	 * @param PresenceManager $manager
 	 * @param list<PresenceEntry> $others
+	 * @param PresenceEntry $viewer
 	 * @return list<array{group: string, anonymous: bool, username?: string}>
 	 */
 	private function viewFor(
@@ -75,11 +80,11 @@ class PresenceManagerTest extends MediaWikiUnitTestCase {
 		PresenceEntry $viewer
 	): array {
 		foreach ( $others as $other ) {
-			$manager->heartbeat( pageKey: 'page', entry: $other );
+			$manager->heartbeat( 'page', $other );
 		}
 
-		$all = $manager->heartbeat( pageKey: 'page', entry: $viewer );
-		return $manager->visibleEditors( viewer: $viewer, entries: $all );
+		$all = $manager->heartbeat( 'page', $viewer );
+		return $manager->visibleEditors( $viewer, $all );
 	}
 
 	/**
@@ -177,78 +182,78 @@ class PresenceManagerTest extends MediaWikiUnitTestCase {
 
 	public function testExpiredEntriesAreDropped(): void {
 		$manager = $this->newManager( names: true, wholePage: true, sameSection: true, ownSessions: false );
-		$manager->heartbeat( pageKey: 'page', entry: $this->newEntry( 'aaaaaaaa', 1, '' ) );
+		$manager->heartbeat( 'page', $this->newEntry( 'aaaaaaaa', 1, '' ) );
 
 		ConvertibleTimestamp::setFakeTime( self::NOW + 60, 0 );
 		$viewer = $this->newEntry( 'bbbbbbbb', 2, '' );
-		$all = $manager->heartbeat( pageKey: 'page', entry: $viewer );
+		$all = $manager->heartbeat( 'page', $viewer );
 
-		$this->assertSame( [], $manager->visibleEditors( viewer: $viewer, entries: $all ) );
+		$this->assertSame( [], $manager->visibleEditors( $viewer, $all ) );
 	}
 
 	public function testLeaveRemovesTheEditor(): void {
 		$manager = $this->newManager( names: true, wholePage: true, sameSection: true, ownSessions: false );
-		$manager->heartbeat( pageKey: 'page', entry: $this->newEntry( 'aaaaaaaa', 1, '' ) );
-		$manager->leave( pageKey: 'page', clientId: 'aaaaaaaa' );
+		$manager->heartbeat( 'page', $this->newEntry( 'aaaaaaaa', 1, '' ) );
+		$manager->leave( 'page', 'aaaaaaaa' );
 
 		$viewer = $this->newEntry( 'bbbbbbbb', 2, '' );
-		$all = $manager->heartbeat( pageKey: 'page', entry: $viewer );
+		$all = $manager->heartbeat( 'page', $viewer );
 
-		$this->assertSame( [], $manager->visibleEditors( viewer: $viewer, entries: $all ) );
+		$this->assertSame( [], $manager->visibleEditors( $viewer, $all ) );
 	}
 
 	public function testPagesAreIndependent(): void {
 		$manager = $this->newManager( names: true, wholePage: true, sameSection: true, ownSessions: false );
-		$manager->heartbeat( pageKey: 'one', entry: $this->newEntry( 'aaaaaaaa', 1, '' ) );
+		$manager->heartbeat( 'one', $this->newEntry( 'aaaaaaaa', 1, '' ) );
 
 		$viewer = $this->newEntry( 'bbbbbbbb', 2, '' );
-		$all = $manager->heartbeat( pageKey: 'two', entry: $viewer );
+		$all = $manager->heartbeat( 'two', $viewer );
 
-		$this->assertSame( [], $manager->visibleEditors( viewer: $viewer, entries: $all ) );
+		$this->assertSame( [], $manager->visibleEditors( $viewer, $all ) );
 	}
 
 	public function testOwnOtherSessionsAreShownWhenEnabled(): void {
 		$manager = $this->newManager( names: true, wholePage: true, sameSection: true, ownSessions: true );
-		$manager->heartbeat( pageKey: 'page', entry: $this->newEntry( 'aaaaaaaa', 5, '' ) );
+		$manager->heartbeat( 'page', $this->newEntry( 'aaaaaaaa', 5, '' ) );
 
 		$viewer = $this->newEntry( 'bbbbbbbb', 5, '' );
-		$all = $manager->heartbeat( pageKey: 'page', entry: $viewer );
+		$all = $manager->heartbeat( 'page', $viewer );
 
 		$this->assertSame(
 			[ [ 'group' => 'page', 'anonymous' => false, 'username' => 'User5' ] ],
-			$manager->visibleEditors( viewer: $viewer, entries: $all )
+			$manager->visibleEditors( $viewer, $all )
 		);
 	}
 
 	public function testPublishesOnlyWhenEditorsChange(): void {
 		$manager = $this->newManager( names: true, wholePage: true, sameSection: true, ownSessions: false );
 
-		$manager->heartbeat( pageKey: 'page', entry: $this->newEntry( 'aaaaaaaa', 1, '' ) );
+		$manager->heartbeat( 'page', $this->newEntry( 'aaaaaaaa', 1, '' ) );
 		$this->assertSame( [ 'page' ], $this->push->published );
 
-		$manager->heartbeat( pageKey: 'page', entry: $this->newEntry( 'aaaaaaaa', 1, '' ) );
+		$manager->heartbeat( 'page', $this->newEntry( 'aaaaaaaa', 1, '' ) );
 		$this->assertCount( 1, $this->push->published );
 
-		$manager->heartbeat( pageKey: 'page', entry: $this->newEntry( 'aaaaaaaa', 1, '3' ) );
+		$manager->heartbeat( 'page', $this->newEntry( 'aaaaaaaa', 1, '3' ) );
 		$this->assertCount( 2, $this->push->published );
 
-		$manager->leave( pageKey: 'page', clientId: 'aaaaaaaa' );
+		$manager->leave( 'page', 'aaaaaaaa' );
 		$this->assertCount( 3, $this->push->published );
 
-		$manager->leave( pageKey: 'page', clientId: 'aaaaaaaa' );
+		$manager->leave( 'page', 'aaaaaaaa' );
 		$this->assertCount( 3, $this->push->published );
 	}
 
 	public function testPeekReturnsEditorsWithoutRecordingAnything(): void {
 		$manager = $this->newManager( names: true, wholePage: true, sameSection: true, ownSessions: false );
-		$manager->heartbeat( pageKey: 'page', entry: $this->newEntry( 'aaaaaaaa', 1, '' ) );
+		$manager->heartbeat( 'page', $this->newEntry( 'aaaaaaaa', 1, '' ) );
 		$published = count( $this->push->published );
 
-		$peeked = $manager->peek( pageKey: 'page' );
+		$peeked = $manager->peek( 'page' );
 
 		$this->assertCount( 1, $peeked );
 		$this->assertSame( 'aaaaaaaa', $peeked[0]->clientId );
 		$this->assertCount( $published, $this->push->published );
-		$this->assertSame( [], $manager->peek( pageKey: 'other' ) );
+		$this->assertSame( [], $manager->peek( 'other' ) );
 	}
 }
