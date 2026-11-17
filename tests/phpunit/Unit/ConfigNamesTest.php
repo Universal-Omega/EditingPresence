@@ -22,8 +22,9 @@ class ConfigNamesTest extends MediaWikiUnitTestCase {
 
 	public function testNamesMatchExtensionJson(): void {
 		$json = file_get_contents( __DIR__ . '/../../../extension.json' );
-		/** @var array{config: array<string, mixed>} $manifest */
 		$manifest = json_decode( $json, associative: true, flags: JSON_THROW_ON_ERROR );
+		$this->assertIsArray( $manifest );
+		$this->assertIsArray( $manifest['config'] );
 
 		$declared = array_keys( $manifest['config'] );
 		$constants = array_values( ( new ReflectionClass( ConfigNames::class ) )->getConstants() );
