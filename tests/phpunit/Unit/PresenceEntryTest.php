@@ -23,7 +23,7 @@ class PresenceEntryTest extends MediaWikiUnitTestCase {
 			touched: 1000,
 		);
 
-		$copy = PresenceEntry::fromArray( data: $entry->toArray() );
+		$copy = PresenceEntry::fromArray( $entry->toArray() );
 
 		$this->assertNotNull( $copy );
 		$this->assertSame( $entry->toArray(), $copy->toArray() );
@@ -44,7 +44,7 @@ class PresenceEntryTest extends MediaWikiUnitTestCase {
 	 * @param array<mixed> $data
 	 */
 	public function testInvalidDataIsRejected( array $data ): void {
-		$this->assertNull( PresenceEntry::fromArray( data: $data ) );
+		$this->assertNull( PresenceEntry::fromArray( $data ) );
 	}
 
 	public static function provideInvalidData(): Generator {
