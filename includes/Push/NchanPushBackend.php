@@ -8,6 +8,8 @@ use MediaWiki\Deferred\DeferredUpdates;
 use MediaWiki\Http\HttpRequestFactory;
 use MediaWiki\Logger\LoggerFactory;
 use Psr\Log\LoggerInterface;
+use function hash_hmac;
+use function rtrim;
 
 /**
  * Pushes through the Nchan module of nginx. Browsers subscribe to a channel
@@ -54,9 +56,7 @@ final class NchanPushBackend implements PushBackend {
 		}
 
 		DeferredUpdates::addCallableUpdate(
-			function () use ( $pageKey ): void {
-				$this->publishNow( pageKey: $pageKey );
-			},
+			fn () => $this->publishNow( pageKey: $pageKey ),
 			DeferredUpdates::POSTSEND,
 			[]
 		);
