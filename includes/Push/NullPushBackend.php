@@ -9,12 +9,18 @@ namespace MediaWiki\Extension\EditingPresence\Push;
  */
 final class NullPushBackend implements PushBackend {
 
-	/** @inheritDoc */
+	/**
+	 * @inheritDoc
+	 * @param string $pageKey @phan-unused-param
+	 */
 	public function getClientConfig( string $pageKey ): ?array {
 		return null;
 	}
 
-	/** @inheritDoc */
+	/**
+	 * @inheritDoc
+	 * @param string $pageKey @phan-unused-param
+	 */
 	public function publishChange( string $pageKey ): void {
 	}
 }
