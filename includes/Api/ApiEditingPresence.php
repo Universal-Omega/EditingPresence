@@ -36,7 +36,7 @@ final class ApiEditingPresence extends ApiBase {
 		private readonly PushBackend $push,
 		private readonly TitleFactory $titleFactory,
 	) {
-		parent::__construct( mainModule: $mainModule, moduleName: $moduleName, modulePrefix: '' );
+		parent::__construct( $mainModule, $moduleName, modulePrefix: '' );
 	}
 
 	/** @inheritDoc */
@@ -45,13 +45,13 @@ final class ApiEditingPresence extends ApiBase {
 
 		$clientId = $params['clientid'];
 		if ( preg_match( self::CLIENT_ID_PATTERN, $clientId ) !== 1 ) {
-			$this->dieBadParameter( paramName: 'clientid' );
+			$this->dieBadParameter( 'clientid' );
 		}
 
-		$title = $this->titleFactory->newFromText( text: $params['title'], defaultNamespace: NS_MAIN );
+		$title = $this->titleFactory->newFromText( $params['title'], NS_MAIN );
 		if ( $title === null || !$title->canExist() ) {
 			$this->dieWithError(
-				msg: [ 'apierror-invalidtitle', wfEscapeWikiText( $params['title'] ) ],
+				[ 'apierror-invalidtitle', wfEscapeWikiText( $params['title'] ) ],
 				code: null,
 				data: null,
 				httpCode: 0
@@ -60,22 +60,17 @@ final class ApiEditingPresence extends ApiBase {
 		$pageKey = sha1( $title->getPrefixedDBkey() );
 
 		if ( $params['task'] === 'leave' ) {
-			$this->manager->leave( pageKey: $pageKey, clientId: $clientId );
-			$this->getResult()->addValue(
-				path: null,
-				name: $this->getModuleName(),
-				value: [ 'left' => true ],
-				flags: 0
-			);
+			$this->manager->leave( $pageKey, $clientId );
+			$this->getResult()->addValue( null, $this->getModuleName(), [ 'left' => true ], flags: 0 );
 			return;
 		}
 
 		$section = $params['section'];
 		if ( preg_match( self::SECTION_PATTERN, $section ) !== 1 ) {
-			$this->dieBadParameter( paramName: 'section' );
+			$this->dieBadParameter( 'section' );
 		}
 
-		$this->checkTitleUserPermissions( pageIdentity: $title, actions: 'edit', options: [] );
+		$this->checkTitleUserPermissions( $title, 'edit', options: [] );
 
 		$user = $this->getUser();
 		$viewer = new PresenceEntry(
@@ -87,9 +82,9 @@ final class ApiEditingPresence extends ApiBase {
 		);
 
 		$entries = $params['task'] === 'refresh'
-			? $this->manager->peek( pageKey: $pageKey )
-			: $this->manager->heartbeat( pageKey: $pageKey, entry: $viewer );
-		$editors = $this->manager->visibleEditors( viewer: $viewer, entries: $entries );
+			? $this->manager->peek( $pageKey )
+			: $this->manager->heartbeat( $pageKey, $viewer );
+		$editors = $this->manager->visibleEditors( $viewer, $entries );
 		ApiResult::setIndexedTagName( $editors, 'editor' );
 
 		$value = [
@@ -100,22 +95,17 @@ final class ApiEditingPresence extends ApiBase {
 			'editors' => $editors,
 		];
 
-		$push = $this->push->getClientConfig( pageKey: $pageKey );
+		$push = $this->push->getClientConfig( $pageKey );
 		if ( $push !== null ) {
 			$value['push'] = $push;
 		}
 
-		$this->getResult()->addValue(
-			path: null,
-			name: $this->getModuleName(),
-			value: $value,
-			flags: 0
-		);
+		$this->getResult()->addValue( null, $this->getModuleName(), $value, flags: 0 );
 	}
 
 	private function dieBadParameter( string $paramName ): never {
 		$this->dieWithError(
-			msg: [ 'apierror-badparameter', $this->encodeParamName( paramName: $paramName ) ],
+			[ 'apierror-badparameter', $this->encodeParamName( $paramName ) ],
 			code: null,
 			data: null,
 			httpCode: 0
