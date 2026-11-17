@@ -47,11 +47,16 @@
 		}
 	},
 	"Hooks": {
-		"EditPage::showEditForm:initial": "editpage",
-		"BeforePageDisplay": "pagedisplay"
+		"BeforePageDisplay": "pagedisplay",
+		"EditPage::showEditForm:initial": "editpage"
 	},
 	"attributes": {
 		"EditingPresence": {
+			"AvatarProviders": {
+				"userprofilev2": {
+					"class": "MediaWiki\\Extension\\EditingPresence\\Avatar\\UserProfileV2AvatarProvider"
+				}
+			},
 			"PushBackends": {
 				"nchan": {
 					"factory": "MediaWiki\\Extension\\EditingPresence\\Push\\NchanPushBackend::factory",
@@ -59,11 +64,6 @@
 						"EditingPresence.PushSettings",
 						"HttpRequestFactory"
 					]
-				}
-			},
-			"AvatarProviders": {
-				"userprofilev2": {
-					"class": "MediaWiki\\Extension\\EditingPresence\\Avatar\\UserProfileV2AvatarProvider"
 				}
 			}
 		},
@@ -139,9 +139,21 @@
 		}
 	},
 	"config": {
-		"EditingPresenceShowUsernames": {
-			"value": true,
-			"description": "Whether the names of the other editors are shown. When false, only the number of other editors is shown and names are never sent to the browser. Anonymous editors are never named, so IP addresses are never exposed."
+		"EditingPresenceActiveHeartbeatInterval": {
+			"value": 3,
+			"description": "Seconds between updates while polling and someone else is editing the page. Never more than the heartbeat interval and never below 2. Not used while a push connection is working."
+		},
+		"EditingPresenceAvatarProvider": {
+			"value": "userprofilev2",
+			"description": "Name of the avatar provider used by rich presence, for example userprofilev2. An empty string shows the first letter of the name instead. Other extensions can add providers."
+		},
+		"EditingPresenceCacheId": {
+			"value": "",
+			"description": "Key of an entry in $wgObjectCaches used to store presence data. An empty string uses the main object stash ($wgMainStash)."
+		},
+		"EditingPresenceHeartbeatInterval": {
+			"value": 20,
+			"description": "Seconds between presence updates sent by an open editor. Values below 5 are raised to 5."
 		},
 		"EditingPresenceIncludeOwnOtherSessions": {
 			"value": false,
@@ -151,37 +163,9 @@
 			"value": 5,
 			"description": "Names are only listed while fewer than this many editors fall in a group. At or above it the notice shows just the number, for example 5 other users are also editing this page. Values below 1 are raised to 1."
 		},
-		"EditingPresenceSectionIncludeWholePageEditors": {
-			"value": true,
-			"description": "When a user edits a single section, whether users who are editing the whole page are included in the notice."
-		},
-		"EditingPresenceSectionIncludeSameSectionEditors": {
-			"value": true,
-			"description": "When a user edits a single section, whether other users editing that same section are included in the notice."
-		},
-		"EditingPresenceHeartbeatInterval": {
-			"value": 20,
-			"description": "Seconds between presence updates sent by an open editor. Values below 5 are raised to 5."
-		},
-		"EditingPresenceActiveHeartbeatInterval": {
-			"value": 3,
-			"description": "Seconds between updates while polling and someone else is editing the page. Never more than the heartbeat interval and never below 2. Not used while a push connection is working."
-		},
-		"EditingPresenceTimeout": {
-			"value": 60,
-			"description": "Seconds after the last update before an editor is considered gone. Never less than twice the heartbeat interval."
-		},
-		"EditingPresenceCacheId": {
-			"value": "",
-			"description": "Key of an entry in $wgObjectCaches used to store presence data. An empty string uses the main object stash ($wgMainStash)."
-		},
-		"EditingPresencePushBackend": {
-			"value": "",
-			"description": "Name of the push backend that wakes other editors instantly, for example nchan. An empty string uses polling only."
-		},
-		"EditingPresenceNchanSubscribeUrl": {
-			"value": "",
-			"description": "Address browsers subscribe to, without the channel id, for example /editingpresence/sub. Relative addresses are resolved against the wiki."
+		"EditingPresenceNchanProtocol": {
+			"value": "websocket",
+			"description": "How browsers connect to Nchan, either websocket or sse."
 		},
 		"EditingPresenceNchanPublishUrl": {
 			"value": "",
@@ -191,17 +175,33 @@
 			"value": "",
 			"description": "Secret used to derive unguessable channel ids. Set it to a long random string in LocalSettings.php. Push stays off while it is empty."
 		},
-		"EditingPresenceNchanProtocol": {
-			"value": "websocket",
-			"description": "How browsers connect to Nchan, either websocket or sse."
+		"EditingPresenceNchanSubscribeUrl": {
+			"value": "",
+			"description": "Address browsers subscribe to, without the channel id, for example /editingpresence/sub. Relative addresses are resolved against the wiki."
+		},
+		"EditingPresencePushBackend": {
+			"value": "",
+			"description": "Name of the push backend that wakes other editors instantly, for example nchan. An empty string uses polling only."
 		},
 		"EditingPresenceRichPresence": {
 			"value": true,
 			"description": "Whether editors who are listed by name also get an avatar, a colour and a typing indicator. Only editors whose name is already shown are affected, so nothing extra is revealed."
 		},
-		"EditingPresenceAvatarProvider": {
-			"value": "userprofilev2",
-			"description": "Name of the avatar provider used by rich presence, for example userprofilev2. An empty string shows the first letter of the name instead. Other extensions can add providers."
+		"EditingPresenceSectionIncludeSameSectionEditors": {
+			"value": true,
+			"description": "When a user edits a single section, whether other users editing that same section are included in the notice."
+		},
+		"EditingPresenceSectionIncludeWholePageEditors": {
+			"value": true,
+			"description": "When a user edits a single section, whether users who are editing the whole page are included in the notice."
+		},
+		"EditingPresenceShowUsernames": {
+			"value": true,
+			"description": "Whether the names of the other editors are shown. When false, only the number of other editors is shown and names are never sent to the browser. Anonymous editors are never named, so IP addresses are never exposed."
+		},
+		"EditingPresenceTimeout": {
+			"value": 60,
+			"description": "Seconds after the last update before an editor is considered gone. Never less than twice the heartbeat interval."
 		},
 		"EditingPresenceTypingIndicator": {
 			"value": true,
