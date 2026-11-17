@@ -36,6 +36,13 @@ wfLoadExtension( 'EditingPresence' );
 While editing the whole page, everyone editing the page is shown, whether they
 have the whole page or a section open.
 
+## Editors
+
+Presence works in the wikitext editor, in VisualEditor and in the MobileFrontend
+source editor on Minerva. The mobile editor is an overlay, so a tiny module is
+loaded on mobile pages that waits for it to open and only then loads the rest.
+The mobile visual editor is not covered yet.
+
 ## Rich presence
 
 With `$wgEditingPresenceRichPresence` on, every editor who is listed by name gets
