@@ -29,11 +29,7 @@ final class NchanPushBackend implements PushBackend {
 	}
 
 	public static function factory( PushSettings $settings, HttpRequestFactory $http ): self {
-		return new self(
-			settings: $settings,
-			http: $http,
-			logger: LoggerFactory::getInstance( 'EditingPresence' ),
-		);
+		return new self( $settings, $http, LoggerFactory::getInstance( 'EditingPresence' ) );
 	}
 
 	/** @inheritDoc */
@@ -65,15 +61,11 @@ final class NchanPushBackend implements PushBackend {
 	public function publishNow( string $pageKey ): void {
 		$url = $this->channelUrl( $this->settings->nchanPublishUrl, $pageKey );
 
-		$response = $this->http->post(
-			url: $url,
-			options: [
-				'postData' => 'changed',
-				'timeout' => self::PUBLISH_TIMEOUT,
-				'connectTimeout' => self::PUBLISH_TIMEOUT,
-			],
-			caller: __METHOD__
-		);
+		$response = $this->http->post( $url, [
+			'postData' => 'changed',
+			'timeout' => self::PUBLISH_TIMEOUT,
+			'connectTimeout' => self::PUBLISH_TIMEOUT,
+		], __METHOD__ );
 
 		if ( $response === null ) {
 			$this->logger->warning( 'Could not publish to Nchan at {url}', [ 'url' => $url ] );
