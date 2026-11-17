@@ -4,13 +4,16 @@ declare( strict_types=1 );
 
 namespace MediaWiki\Extension\EditingPresence;
 
+use MediaWiki\Extension\EditingPresence\Avatar\AvatarProvider;
 use MediaWiki\Extension\EditingPresence\Push\PushBackend;
 use Wikimedia\ObjectCache\BagOStuff;
 use Wikimedia\Timestamp\ConvertibleTimestamp;
 use function array_map;
 use function array_values;
 use function count;
+use function crc32;
 use function is_array;
+use function preg_match;
 
 /**
  * Keeps track of who has an editor open on which page, and decides what
@@ -24,6 +27,7 @@ final class PresenceManager {
 		private readonly PresenceSettings $settings,
 		private readonly BagOStuff $store,
 		private readonly PushBackend $push,
+		private readonly AvatarProvider $avatars,
 	) {
 	}
 
@@ -56,11 +60,12 @@ final class PresenceManager {
 	/**
 	 * @param PresenceEntry $viewer
 	 * @param list<PresenceEntry> $entries
-	 * @return list<array{group: string, anonymous: bool, username?: string}>
+	 * @return list<array<string, bool|int|string>>
 	 */
 	public function visibleEditors( PresenceEntry $viewer, array $entries ): array {
 		$seen = [];
 		$visible = [];
+		$now = ConvertibleTimestamp::time();
 
 		foreach ( $entries as $other ) {
 			if ( $other->clientId === $viewer->clientId ) {
@@ -93,11 +98,35 @@ final class PresenceManager {
 			];
 			if ( $this->settings->showUsernames && $other->isRegistered ) {
 				$editor['username'] = $other->userName;
+				if ( $this->settings->richPresence ) {
+					$editor += $this->richDetails( $other, $now );
+				}
 			}
 			$visible[] = $editor;
 		}
 
 		return $visible;
+	}
+
+	/**
+	 * Only ever called for editors whose name is being shown, so none of this
+	 * reveals anything the name does not.
+	 *
+	 * @return array<string, bool|int|string>
+	 */
+	private function richDetails( PresenceEntry $other, int $now ): array {
+		$details = [ 'hue' => crc32( $other->userName ) % 360 ];
+
+		$avatar = $this->avatars->getAvatarUrl( $other->userId );
+		if ( $avatar !== null && preg_match( '~^(?:https?://|/(?!/))~', $avatar ) === 1 ) {
+			$details['avatar'] = $avatar;
+		}
+
+		if ( $this->settings->typingIndicator && $other->isTypingAt( $now ) ) {
+			$details['typing'] = true;
+		}
+
+		return $details;
 	}
 
 	private function classify( PresenceEntry $viewer, PresenceEntry $other ): ?EditorGroup {
@@ -149,7 +178,7 @@ final class PresenceManager {
 					unset( $entries[$clientId] );
 				}
 
-				$changed = $dropped || $this->differs( $previous, $entry );
+				$changed = $dropped || $this->differs( $previous, $entry, $now );
 				$result = array_values( $entries );
 				$ttl = $timeout;
 
@@ -183,9 +212,10 @@ final class PresenceManager {
 
 	/**
 	 * Whether the update means other editors need to hear about it. A repeated
-	 * heartbeat that changes nothing does not.
+	 * heartbeat that changes nothing does not. Changes of section and of
+	 * typing count.
 	 */
-	private function differs( ?PresenceEntry $previous, ?PresenceEntry $entry ): bool {
+	private function differs( ?PresenceEntry $previous, ?PresenceEntry $entry, int $now ): bool {
 		if ( $entry === null ) {
 			return $previous !== null;
 		}
@@ -194,7 +224,8 @@ final class PresenceManager {
 			return true;
 		}
 
-		return $previous->section !== $entry->section;
+		return $previous->section !== $entry->section ||
+			$previous->isTypingAt( $now ) !== $entry->isTypingAt( $now );
 	}
 
 	/**
