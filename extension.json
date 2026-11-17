@@ -56,6 +56,11 @@
 						"HttpRequestFactory"
 					]
 				}
+			},
+			"AvatarProviders": {
+				"userprofilev2": {
+					"class": "MediaWiki\\Extension\\EditingPresence\\Avatar\\UserProfileV2AvatarProvider"
+				}
 			}
 		},
 		"VisualEditor": {
@@ -95,7 +100,8 @@
 				"editingpresence-section-page-named",
 				"editingpresence-section-page-count",
 				"editingpresence-section-section-named",
-				"editingpresence-section-section-count"
+				"editingpresence-section-section-count",
+				"editingpresence-typing"
 			],
 			"dependencies": [
 				"mediawiki.api",
@@ -179,6 +185,18 @@
 		"EditingPresenceNchanProtocol": {
 			"value": "websocket",
 			"description": "How browsers connect to Nchan, either websocket or sse."
+		},
+		"EditingPresenceRichPresence": {
+			"value": true,
+			"description": "Whether editors who are listed by name also get an avatar, a colour and a typing indicator. Only editors whose name is already shown are affected, so nothing extra is revealed."
+		},
+		"EditingPresenceAvatarProvider": {
+			"value": "userprofilev2",
+			"description": "Name of the avatar provider used by rich presence, for example userprofilev2. An empty string shows the first letter of the name instead. Other extensions can add providers."
+		},
+		"EditingPresenceTypingIndicator": {
+			"value": true,
+			"description": "Whether other editors are told when someone is typing. Needs rich presence and shown usernames."
 		}
 	},
 	"manifest_version": 2
