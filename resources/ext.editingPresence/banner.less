@@ -1,4 +1,4 @@
-@avatar-size: 24px;
+@avatar-size: 28px;
 
 // Escaped so less.php leaves the modern color syntax and var() alone.
 @avatar-color: ~'hsl( var( --ext-editingpresence-hue, 0 ) 65% 45% )';
@@ -17,9 +17,23 @@
 	}
 }
 
+.ext-editingpresence-row {
+	display: flex;
+	align-items: center;
+}
+
 .ext-editingpresence-avatars {
 	display: flex;
-	margin-bottom: 6px;
+	flex: none;
+	margin-right: 12px;
+}
+
+.ext-editingpresence-avatar + .ext-editingpresence-avatar {
+	margin-left: 6px;
+}
+
+.ext-editingpresence-text {
+	min-width: 0;
 }
 
 .ext-editingpresence-avatar {
@@ -28,11 +42,11 @@
 	width: @avatar-size;
 	height: @avatar-size;
 	box-sizing: border-box;
+	flex: none;
 	align-items: center;
 	justify-content: center;
 	border: 2px solid @avatar-color;
 	border-radius: 50%;
-	margin-right: -6px;
 	background-color: @avatar-color;
 	color: #fff;
 	font-size: 0.85em;
