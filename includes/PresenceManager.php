@@ -54,6 +54,7 @@ final class PresenceManager {
 	}
 
 	/**
+	 * @param PresenceEntry $viewer
 	 * @param list<PresenceEntry> $entries
 	 * @return list<array{group: string, anonymous: bool, username?: string}>
 	 */
