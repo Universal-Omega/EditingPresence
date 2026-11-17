@@ -13,11 +13,11 @@ use MediaWiki\Registration\ExtensionRegistry;
 
 return [
 	'EditingPresence.Settings' => static function ( MediaWikiServices $services ): PresenceSettings {
-		return PresenceSettings::fromConfig( config: $services->getMainConfig() );
+		return PresenceSettings::fromConfig( $services->getMainConfig() );
 	},
 
 	'EditingPresence.PushSettings' => static function ( MediaWikiServices $services ): PushSettings {
-		return PushSettings::fromConfig( config: $services->getMainConfig() );
+		return PushSettings::fromConfig( $services->getMainConfig() );
 	},
 
 	'EditingPresence.PushBackend' => static function ( MediaWikiServices $services ): PushBackend {
@@ -37,8 +37,8 @@ return [
 		}
 
 		return $services->getObjectFactory()->createObject(
-			spec: $specs[$settings->backend],
-			options: [ 'assertClass' => PushBackend::class ]
+			$specs[$settings->backend],
+			[ 'assertClass' => PushBackend::class ]
 		);
 	},
 
@@ -50,8 +50,8 @@ return [
 
 		$store = $settings->cacheId === ''
 			? $services->getMainObjectStash()
-			: $services->getObjectCacheFactory()->getInstance( id: $settings->cacheId );
+			: $services->getObjectCacheFactory()->getInstance( $settings->cacheId );
 
-		return new PresenceManager( settings: $settings, store: $store, push: $push );
+		return new PresenceManager( $settings, $store, $push );
 	},
 ];
