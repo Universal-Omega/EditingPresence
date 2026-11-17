@@ -13,6 +13,8 @@ use function is_string;
  */
 final class PresenceEntry {
 
+	// Doesn't understand property hooks.
+	// phpcs:disable PSR2.Classes.PropertyDeclaration,Squiz.Scope.MemberVarScope
 	public bool $isWholePage {
 		get => $this->section === '';
 	}
@@ -20,6 +22,7 @@ final class PresenceEntry {
 	public bool $isRegistered {
 		get => $this->userId !== 0;
 	}
+	// phpcs:enable PSR2.Classes.PropertyDeclaration,Squiz.Scope.MemberVarScope
 
 	public function __construct(
 		public readonly string $clientId,
