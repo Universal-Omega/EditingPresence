@@ -19,7 +19,7 @@ class PresenceSettingsTest extends MediaWikiUnitTestCase {
 	 * @param array<string, mixed> $overrides
 	 */
 	private function newSettings( array $overrides ): PresenceSettings {
-		return PresenceSettings::fromConfig( config: new HashConfig( $overrides + [
+		return PresenceSettings::fromConfig( new HashConfig( $overrides + [
 			ConfigNames::ActiveHeartbeatInterval => 3,
 			ConfigNames::CacheId => '',
 			ConfigNames::HeartbeatInterval => 20,
