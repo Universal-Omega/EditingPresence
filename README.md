@@ -20,6 +20,9 @@ wfLoadExtension( 'EditingPresence' );
 | `$wgEditingPresenceMaxListedNames` | `5` | Names are listed only while fewer than this many editors are in a group. At or above it only the count is shown. |
 | `$wgEditingPresenceSectionIncludeWholePageEditors` | `true` | While editing one section, include users editing the whole page. |
 | `$wgEditingPresenceSectionIncludeSameSectionEditors` | `true` | While editing one section, include users editing that same section. |
+| `$wgEditingPresenceRichPresence` | `true` | Give editors who are listed by name an avatar, a colour and a typing indicator. |
+| `$wgEditingPresenceAvatarProvider` | `'userprofilev2'` | Where avatars come from. Empty shows the first letter of the name instead. |
+| `$wgEditingPresenceTypingIndicator` | `true` | Tell other editors when someone is typing. Needs rich presence and shown usernames. |
 | `$wgEditingPresenceHeartbeatInterval` | `20` | Seconds between updates from an open editor (minimum 5). |
 | `$wgEditingPresenceActiveHeartbeatInterval` | `3` | Seconds between updates while polling and someone else is editing (between 2 and the heartbeat interval). |
 | `$wgEditingPresencePushBackend` | `''` | Push backend name, for example `nchan`. Empty means polling only. |
@@ -32,6 +35,47 @@ wfLoadExtension( 'EditingPresence' );
 
 While editing the whole page, everyone editing the page is shown, whether they
 have the whole page or a section open.
+
+## Editors
+
+Presence works in the wikitext editor, in VisualEditor and in the MobileFrontend
+source editor on Minerva. The mobile editor is an overlay, so a tiny module is
+loaded on mobile pages that waits for it to open and only then loads the rest.
+The mobile visual editor is not covered yet.
+
+## Rich presence
+
+With `$wgEditingPresenceRichPresence` on, every editor who is listed by name gets
+a small avatar with a colour that is the same for that user everywhere. An editor
+who is typing gets a pulsing ring and a line saying who is typing. Nothing is
+sent for editors who are not named, so hiding usernames or crossing
+`EditingPresenceMaxListedNames` hides all of it too. Logged out editors never get
+any of it. The pulse stops for visitors who prefer reduced motion.
+
+Typing is reported by the browser a few seconds after the last key press and
+fades out on its own after ten seconds, so a closed tab never stays stuck as
+typing.
+
+### Avatars
+
+`userprofilev2` reads avatars from the UserProfileV2 extension and needs nothing
+beyond that extension being installed. Without it, or for users with no avatar,
+the first letter of the name is shown in the user's colour. Avatar URLs must be
+`http`, `https` or root relative, anything else is ignored.
+
+Other extensions can supply avatars by implementing
+`MediaWiki\Extension\EditingPresence\Avatar\AvatarProvider` and registering it
+as an extension attribute, then choosing it with `$wgEditingPresenceAvatarProvider`:
+
+```json
+"attributes": {
+	"EditingPresence": {
+		"AvatarProviders": {
+			"myavatars": { "class": "My\\AvatarProvider", "services": [] }
+		}
+	}
+}
+```
 
 ## Updates
 
@@ -99,14 +143,3 @@ factory returns an object with `start( onSignal, onState )` and `stop()`.
 
 Presence data lives in the object cache only, so there are no database tables
 to create. On a busy wiki point `EditingPresenceCacheId` at Redis or Memcached.
-
-## Development
-
-```
-composer install && composer test
-composer phan
-npm install && npm test
-```
-
-PHPUnit tests live in `tests/phpunit` and run through MediaWiki's own test runner
-inside an installed wiki. CI uses the reusable workflow in `.github/workflows`.

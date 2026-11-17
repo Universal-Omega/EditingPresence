@@ -13,6 +13,8 @@ final class ConfigNames {
 
 	public const string ActiveHeartbeatInterval = 'EditingPresenceActiveHeartbeatInterval';
 
+	public const string AvatarProvider = 'EditingPresenceAvatarProvider';
+
 	public const string CacheId = 'EditingPresenceCacheId';
 
 	public const string HeartbeatInterval = 'EditingPresenceHeartbeatInterval';
@@ -31,6 +33,8 @@ final class ConfigNames {
 
 	public const string PushBackend = 'EditingPresencePushBackend';
 
+	public const string RichPresence = 'EditingPresenceRichPresence';
+
 	public const string SectionIncludeSameSectionEditors = 'EditingPresenceSectionIncludeSameSectionEditors';
 
 	public const string SectionIncludeWholePageEditors = 'EditingPresenceSectionIncludeWholePageEditors';
@@ -38,4 +42,6 @@ final class ConfigNames {
 	public const string ShowUsernames = 'EditingPresenceShowUsernames';
 
 	public const string Timeout = 'EditingPresenceTimeout';
+
+	public const string TypingIndicator = 'EditingPresenceTypingIndicator';
 }

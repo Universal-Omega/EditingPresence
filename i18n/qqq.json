@@ -1,6 +1,8 @@
 {
 	"@metadata": {
-		"authors": []
+		"authors": [
+			"Universal Omega"
+		]
 	},
 	"editingpresence-anonymous-count": "Used in a list of editor names to stand for logged out editors.\n\nParameters:\n* $1 - number of anonymous editors",
 	"editingpresence-desc": "{{desc|name=EditingPresence|url=https://www.mediawiki.org/wiki/Extension:EditingPresence}}",
@@ -11,5 +13,6 @@
 	"editingpresence-section-page-count": "Same as {{msg-mw|editingpresence-section-page-named}} but used when names are hidden.\n\nParameters:\n* $1 - number of other editors",
 	"editingpresence-section-page-named": "Notice shown to a user editing a single section. Other users are editing the whole page.\n\nParameters:\n* $1 - list of names\n* $2 - number of other editors, for PLURAL",
 	"editingpresence-section-section-count": "Same as {{msg-mw|editingpresence-section-section-named}} but used when names are hidden.\n\nParameters:\n* $1 - number of other editors",
-	"editingpresence-section-section-named": "Notice shown to a user editing a single section. Other users are editing the same section.\n\nParameters:\n* $1 - list of names\n* $2 - number of other editors, for PLURAL"
+	"editingpresence-section-section-named": "Notice shown to a user editing a single section. Other users are editing the same section.\n\nParameters:\n* $1 - list of names\n* $2 - number of other editors, for PLURAL",
+	"editingpresence-typing": "Shown below the list of other editors when someone is typing. Parameters:\n* $1 - list of the names of the editors who are typing\n* $2 - number of editors who are typing, for PLURAL"
 }

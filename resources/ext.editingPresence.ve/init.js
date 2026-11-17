@@ -30,6 +30,10 @@ function start() {
 		pageName: target.getPageName(),
 		interval: presence.heartbeatInterval,
 		getSection: () => getCurrentSection( target ),
+		getTypingRoot: () => {
+			const surface = target.getSurface();
+			return surface ? surface.$element : target.$element;
+		},
 		onUpdate: ( response ) => {
 			banner.render( response, getCurrentSection( target ) !== '' );
 		}

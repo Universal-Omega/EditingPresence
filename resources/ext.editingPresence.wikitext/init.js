@@ -16,6 +16,7 @@ $( () => {
 		pageName: mw.config.get( 'wgRelevantPageName' ),
 		interval: presence.heartbeatInterval,
 		getSection: () => section,
+		getTypingRoot: () => $( '#wpTextbox1' ),
 		onUpdate: ( response ) => {
 			banner.render( response, section !== '' );
 		}

@@ -73,12 +73,16 @@ final class ApiEditingPresence extends ApiBase {
 		$this->checkTitleUserPermissions( $title, 'edit', options: [] );
 
 		$user = $this->getUser();
+		$now = ConvertibleTimestamp::time();
+		$typing = $this->settings->typingIndicator && $this->settings->richPresence &&
+			$this->settings->showUsernames && $params['typing'] && $user->isRegistered();
 		$viewer = new PresenceEntry(
 			clientId: $clientId,
 			userId: $user->isRegistered() ? $user->getId() : 0,
 			userName: $user->isRegistered() ? $user->getName() : '',
 			section: $section,
-			touched: ConvertibleTimestamp::time(),
+			touched: $now,
+			typingUntil: $typing ? $now + PresenceEntry::TYPING_TTL : 0,
 		);
 
 		$entries = $params['task'] === 'refresh'
@@ -92,6 +96,8 @@ final class ApiEditingPresence extends ApiBase {
 			'activeinterval' => $this->settings->activeHeartbeatInterval,
 			'showusernames' => $this->settings->showUsernames,
 			'maxnames' => $this->settings->maxListedNames,
+			'typingenabled' => $this->settings->typingIndicator && $this->settings->richPresence &&
+				$this->settings->showUsernames,
 			'editors' => $editors,
 		];
 
@@ -146,6 +152,10 @@ final class ApiEditingPresence extends ApiBase {
 			'section' => [
 				ParamValidator::PARAM_TYPE => 'string',
 				ParamValidator::PARAM_DEFAULT => '',
+			],
+			'typing' => [
+				ParamValidator::PARAM_TYPE => 'boolean',
+				ParamValidator::PARAM_DEFAULT => false,
 			],
 			'clientid' => [
 				ParamValidator::PARAM_TYPE => 'string',

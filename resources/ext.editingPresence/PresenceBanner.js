@@ -8,9 +8,9 @@ class PresenceBanner {
 	constructor() {
 		this.$content = $( '<div>' ).addClass( 'cdx-message__content' );
 		this.$element = $( '<div>' )
-			.addClass( 'cdx-message cdx-message--block cdx-message--warning ext-editingpresence-banner' )
+			.addClass( 'cdx-message cdx-message--block cdx-message--notice ext-editingpresence-banner' )
 			.attr( { role: 'status', 'aria-live': 'polite' } )
-			.append( $( '<span>' ).addClass( 'cdx-message__icon' ), this.$content )
+			.append( this.$content )
 			.hide();
 	}
 
@@ -27,6 +27,8 @@ class PresenceBanner {
 		} );
 
 		this.$content.empty();
+		let listed = [];
+		const lines = [];
 		[ 'page', 'section' ].forEach( ( group ) => {
 			if ( groups[ group ].length ) {
 				const listNames = !!response.showusernames &&
@@ -34,11 +36,73 @@ class PresenceBanner {
 				const line = this.buildLine(
 					groups[ group ], group, viewerEditsSection, listNames
 				);
-				this.$content.append( $( '<p>' ).text( line ) );
+				lines.push( $( '<p>' ).text( line ) );
+				if ( listNames ) {
+					listed = listed.concat( groups[ group ] );
+				}
 			}
 		} );
 
-		this.$element.toggle( this.$content.children().length > 0 );
+		const $text = $( '<div>' ).addClass( 'ext-editingpresence-text' ).append( lines );
+		const $typing = this.buildTyping( listed );
+		if ( $typing ) {
+			$text.append( $typing );
+		}
+
+		const $row = $( '<div>' ).addClass( 'ext-editingpresence-row' );
+		const $avatars = this.buildAvatars( listed );
+		if ( $avatars ) {
+			$row.append( $avatars );
+		}
+		this.$content.append( $row.append( $text ) );
+
+		this.$element.toggle( lines.length > 0 );
+	}
+
+	/**
+	 * Avatars and colours are only sent for editors whose name is shown.
+	 *
+	 * @param {Object[]} editors
+	 * @return {jQuery|null}
+	 */
+	buildAvatars( editors ) {
+		const rich = editors.filter( ( editor ) => editor.username && editor.hue !== undefined );
+		if ( !rich.length ) {
+			return null;
+		}
+		return $( '<div>' )
+			.addClass( 'ext-editingpresence-avatars' )
+			.append( rich.map( ( editor ) => this.buildAvatar( editor ) ) );
+	}
+
+	buildAvatar( editor ) {
+		const $avatar = $( '<span>' )
+			.addClass( 'ext-editingpresence-avatar' )
+			.attr( 'title', editor.username );
+		$avatar[ 0 ].style.setProperty( '--ext-editingpresence-hue', String( Number( editor.hue ) || 0 ) );
+
+		if ( editor.typing ) {
+			$avatar.addClass( 'ext-editingpresence-avatar--typing' );
+		}
+
+		if ( editor.avatar ) {
+			$avatar.append( $( '<img>' ).attr( { src: editor.avatar, alt: '', loading: 'lazy' } ) );
+		} else {
+			$avatar.text( Array.from( editor.username )[ 0 ].toUpperCase() );
+		}
+		return $avatar;
+	}
+
+	buildTyping( editors ) {
+		const names = editors
+			.filter( ( editor ) => editor.typing && editor.username )
+			.map( ( editor ) => editor.username );
+		if ( !names.length ) {
+			return null;
+		}
+		return $( '<p>' )
+			.addClass( 'ext-editingpresence-typing' )
+			.text( mw.message( 'editingpresence-typing', mw.language.listToText( names ), names.length ).text() );
 	}
 
 	buildLine( editors, group, viewerEditsSection, listNames ) {
