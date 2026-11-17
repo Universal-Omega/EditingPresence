@@ -5,6 +5,8 @@ declare( strict_types=1 );
 namespace MediaWiki\Extension\EditingPresence\Tests\Unit;
 
 use Generator;
+use MediaWiki\Extension\EditingPresence\Avatar\AvatarProvider;
+use MediaWiki\Extension\EditingPresence\Avatar\NullAvatarProvider;
 use MediaWiki\Extension\EditingPresence\PresenceEntry;
 use MediaWiki\Extension\EditingPresence\PresenceManager;
 use MediaWiki\Extension\EditingPresence\PresenceSettings;
@@ -13,6 +15,7 @@ use Wikimedia\ObjectCache\HashBagOStuff;
 use Wikimedia\Timestamp\ConvertibleTimestamp;
 use function array_map;
 use function count;
+use function crc32;
 
 /**
  * @group EditingPresence
@@ -41,6 +44,38 @@ class PresenceManagerTest extends MediaWikiUnitTestCase {
 		bool $sameSection,
 		bool $ownSessions
 	): PresenceManager {
+		return $this->buildManager(
+			names: $names,
+			wholePage: $wholePage,
+			sameSection: $sameSection,
+			ownSessions: $ownSessions,
+			rich: false,
+			typing: false,
+			avatars: new NullAvatarProvider()
+		);
+	}
+
+	private function newRichManager( bool $names, bool $typing, AvatarProvider $avatars ): PresenceManager {
+		return $this->buildManager(
+			names: $names,
+			wholePage: true,
+			sameSection: true,
+			ownSessions: false,
+			rich: true,
+			typing: $typing,
+			avatars: $avatars
+		);
+	}
+
+	private function buildManager(
+		bool $names,
+		bool $wholePage,
+		bool $sameSection,
+		bool $ownSessions,
+		bool $rich,
+		bool $typing,
+		AvatarProvider $avatars
+	): PresenceManager {
 		return new PresenceManager(
 			new PresenceSettings(
 				showUsernames: $names,
@@ -48,6 +83,9 @@ class PresenceManagerTest extends MediaWikiUnitTestCase {
 				sectionIncludesSameSectionEditors: $sameSection,
 				includeOwnOtherSessions: $ownSessions,
 				maxListedNames: 5,
+				richPresence: $rich,
+				typingIndicator: $typing,
+				avatarProvider: '',
 				heartbeatInterval: 20,
 				activeHeartbeatInterval: 3,
 				timeout: 60,
@@ -55,16 +93,22 @@ class PresenceManagerTest extends MediaWikiUnitTestCase {
 			),
 			new HashBagOStuff( [] ),
 			$this->push,
+			$avatars,
 		);
 	}
 
 	private function newEntry( string $clientId, int $userId, string $section ): PresenceEntry {
+		return $this->newTypingEntry( $clientId, $userId, $section, 0 );
+	}
+
+	private function newTypingEntry( string $clientId, int $userId, string $section, int $typingUntil ): PresenceEntry {
 		return new PresenceEntry(
 			clientId: $clientId,
 			userId: $userId,
 			userName: $userId === 0 ? '' : 'User' . $userId,
 			section: $section,
 			touched: ConvertibleTimestamp::time(),
+			typingUntil: $typingUntil,
 		);
 	}
 
@@ -72,7 +116,7 @@ class PresenceManagerTest extends MediaWikiUnitTestCase {
 	 * @param PresenceManager $manager
 	 * @param list<PresenceEntry> $others
 	 * @param PresenceEntry $viewer
-	 * @return list<array{group: string, anonymous: bool, username?: string}>
+	 * @return list<array<string, bool|int|string>>
 	 */
 	private function viewFor(
 		PresenceManager $manager,
@@ -255,5 +299,104 @@ class PresenceManagerTest extends MediaWikiUnitTestCase {
 		$this->assertSame( 'aaaaaaaa', $peeked[0]->clientId );
 		$this->assertCount( $published, $this->push->published );
 		$this->assertSame( [], $manager->peek( 'other' ) );
+	}
+
+	public function testRichDetailsAreAddedForNamedEditors(): void {
+		$avatars = new FakeAvatarProvider( [
+			1 => 'https://example.org/one.png',
+			2 => 'javascript:alert(1)',
+			3 => '//example.org/protocol-relative.png',
+			4 => '/images/four.png',
+		] );
+		$manager = $this->newRichManager( names: true, typing: true, avatars: $avatars );
+		$viewer = $this->newEntry( 'vvvvvvvv', 9, '' );
+		$others = [
+			$this->newEntry( 'aaaaaaaa', 1, '' ),
+			$this->newEntry( 'bbbbbbbb', 2, '' ),
+			$this->newEntry( 'cccccccc', 3, '' ),
+			$this->newEntry( 'dddddddd', 4, '' ),
+			$this->newEntry( 'eeeeeeee', 5, '' ),
+		];
+
+		$editors = $this->viewFor( $manager, $others, $viewer );
+
+		$this->assertSame( 'https://example.org/one.png', $editors[0]['avatar'] );
+		$this->assertSame( crc32( 'User1' ) % 360, $editors[0]['hue'] );
+		$this->assertArrayNotHasKey( 'avatar', $editors[1] );
+		$this->assertArrayNotHasKey( 'avatar', $editors[2] );
+		$this->assertSame( '/images/four.png', $editors[3]['avatar'] );
+		$this->assertArrayNotHasKey( 'avatar', $editors[4] );
+		$this->assertArrayHasKey( 'hue', $editors[4] );
+	}
+
+	public function testRichDetailsNeverLeakWithoutNames(): void {
+		$avatars = new FakeAvatarProvider( [ 1 => 'https://example.org/one.png' ] );
+		$manager = $this->newRichManager( names: false, typing: true, avatars: $avatars );
+
+		$editors = $this->viewFor(
+			$manager,
+			[ $this->newTypingEntry( 'aaaaaaaa', 1, '', self::NOW + 5 ) ],
+			$this->newEntry( 'vvvvvvvv', 9, '' )
+		);
+
+		$this->assertSame( [ [ 'group' => 'page', 'anonymous' => false ] ], $editors );
+	}
+
+	public function testRichDetailsAreOffByDefault(): void {
+		$manager = $this->newManager( names: true, wholePage: true, sameSection: true, ownSessions: false );
+
+		$editors = $this->viewFor(
+			$manager,
+			[ $this->newTypingEntry( 'aaaaaaaa', 1, '', self::NOW + 5 ) ],
+			$this->newEntry( 'vvvvvvvv', 9, '' )
+		);
+
+		$this->assertSame( [ 'group' => 'page', 'anonymous' => false, 'username' => 'User1' ], $editors[0] );
+	}
+
+	public function testTypingIsReportedOnlyWhileItLasts(): void {
+		$manager = $this->newRichManager( names: true, typing: true, avatars: new NullAvatarProvider() );
+		$viewer = $this->newEntry( 'vvvvvvvv', 9, '' );
+
+		$editors = $this->viewFor(
+			$manager,
+			[
+				$this->newTypingEntry( 'aaaaaaaa', 1, '', self::NOW + 5 ),
+				$this->newTypingEntry( 'bbbbbbbb', 2, '', self::NOW - 1 ),
+			],
+			$viewer
+		);
+
+		$this->assertTrue( $editors[0]['typing'] );
+		$this->assertArrayNotHasKey( 'typing', $editors[1] );
+	}
+
+	public function testTypingCanBeTurnedOff(): void {
+		$manager = $this->newRichManager( names: true, typing: false, avatars: new NullAvatarProvider() );
+
+		$editors = $this->viewFor(
+			$manager,
+			[ $this->newTypingEntry( 'aaaaaaaa', 1, '', self::NOW + 5 ) ],
+			$this->newEntry( 'vvvvvvvv', 9, '' )
+		);
+
+		$this->assertArrayNotHasKey( 'typing', $editors[0] );
+		$this->assertArrayHasKey( 'hue', $editors[0] );
+	}
+
+	public function testPublishesWhenTypingStartsAndStops(): void {
+		$manager = $this->newManager( names: true, wholePage: true, sameSection: true, ownSessions: false );
+
+		$manager->heartbeat( 'page', $this->newEntry( 'aaaaaaaa', 1, '' ) );
+		$this->assertCount( 1, $this->push->published );
+
+		$manager->heartbeat( 'page', $this->newTypingEntry( 'aaaaaaaa', 1, '', self::NOW + 10 ) );
+		$this->assertCount( 2, $this->push->published );
+
+		$manager->heartbeat( 'page', $this->newTypingEntry( 'aaaaaaaa', 1, '', self::NOW + 10 ) );
+		$this->assertCount( 2, $this->push->published );
+
+		$manager->heartbeat( 'page', $this->newEntry( 'aaaaaaaa', 1, '' ) );
+		$this->assertCount( 3, $this->push->published );
 	}
 }
